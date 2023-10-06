@@ -85,3 +85,30 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context) (*FacilityPage, error)
 
 	return facilityPage, nil
 }
+
+// GetFacilityByID is used to fetch facilities from health crm facility registry using its ID
+func (h *HealthCRMLib) GetFacilityByID(ctx context.Context, id string) (*FacilityOutput, error) {
+	path := fmt.Sprintf("/v1/facilities/facilities/%s/", id)
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to fetch facility from the registry with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var facilityOutput *FacilityOutput
+
+	err = json.Unmarshal(respBytes, &facilityOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilityOutput, nil
+}
