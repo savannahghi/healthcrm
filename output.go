@@ -57,3 +57,16 @@ type FacilityOutput struct {
 	Identifiers   []IdentifiersOutput `json:"identifiers"`
 	BusinessHours []any               `json:"businesshours"`
 }
+
+// FacilityContactOutput is used to show facility's contact
+type FacilityContactOutput struct {
+	Count       int              `json:"count"`
+	Next        string           `json:"next"`
+	Previous    interface{}      `json:"previous"`
+	PageSize    int              `json:"page_size"`
+	CurrentPage int              `json:"current_page"`
+	TotalPages  int              `json:"total_pages"`
+	StartIndex  int              `json:"start_index"`
+	EndIndex    int              `json:"end_index"`
+	Results     []ContactsOutput `json:"results"`
+}

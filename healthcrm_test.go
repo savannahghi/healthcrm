@@ -355,3 +355,91 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_GetFacilityContact(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		facility string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: get facility contact",
+			args: args{
+				ctx:      context.Background(),
+				facility: gofakeit.UUID(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: unable to get facility contact",
+			args: args{
+				ctx:      context.Background(),
+				facility: gofakeit.UUID(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx:      context.Background(),
+				facility: gofakeit.UUID(),
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy case: get facility contact" {
+				path := "/v1/facilities/contacts/"
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := &FacilityContactOutput{
+						Results: []ContactsOutput{
+							{
+								ID: gofakeit.UUID(),
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: unable to get facility contact" {
+				path := "/v1/facilities/contacts/"
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
+				})
+			}
+
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.GetFacilityContact(tt.args.ctx, tt.args.facility)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetFacilityContact() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}

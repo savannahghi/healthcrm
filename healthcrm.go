@@ -112,3 +112,30 @@ func (h *HealthCRMLib) GetFacilityByID(ctx context.Context, id string) (*Facilit
 
 	return facilityOutput, nil
 }
+
+// GetFacilityContact is used to fetch facilities contacts
+func (h *HealthCRMLib) GetFacilityContact(ctx context.Context, facility string) (*FacilityContactOutput, error) {
+	path := "/v1/facilities/contacts/"
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, facility)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to fetch facility contact from the registry with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var facilityContactOutput *FacilityContactOutput
+
+	err = json.Unmarshal(respBytes, &facilityContactOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilityContactOutput, nil
+}
