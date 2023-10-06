@@ -2,7 +2,7 @@ package healthcrm
 
 import "time"
 
-// Facility is the hospitals model used to show facility details
+// FacilityPage is the hospitals model used to show facility details
 type FacilityPage struct {
 	Count       int              `json:"count"`
 	Next        string           `json:"next"`
@@ -14,10 +14,14 @@ type FacilityPage struct {
 	EndIndex    int              `json:"end_index"`
 	Results     []FacilityOutput `json:"results"`
 }
+
+// CoordinatesOutput is used to show geographical coordinates
 type CoordinatesOutput struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
+
+// ContactsOutput is used to show facility contacts
 type ContactsOutput struct {
 	ID           string `json:"id"`
 	ContactType  string `json:"contact_type"`
@@ -26,6 +30,8 @@ type ContactsOutput struct {
 	Role         string `json:"role"`
 	FacilityID   string `json:"facility_id"`
 }
+
+// IdentifiersOutput is used to display facility identifiers
 type IdentifiersOutput struct {
 	ID              string `json:"id"`
 	IdentifierType  string `json:"identifier_type"`
@@ -34,6 +40,8 @@ type IdentifiersOutput struct {
 	ValidTo         string `json:"valid_to"`
 	FacilityID      string `json:"facility_id"`
 }
+
+// FacilityOutput is used to display facility(ies)
 type FacilityOutput struct {
 	ID            string              `json:"id"`
 	Created       time.Time           `json:"created"`
