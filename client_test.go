@@ -43,7 +43,7 @@ func TestMakeRequest(t *testing.T) {
 				County:       "Meru",
 				Country:      "KE",
 				Address:      "1200-Meru",
-				Coordinates: Coordinates{
+				Coordinates: &Coordinates{
 					Latitude:  "30.40338",
 					Longitude: "5.17403",
 				},
@@ -78,7 +78,7 @@ func TestMakeRequest(t *testing.T) {
 				County:       "Meru",
 				Country:      "KE",
 				Address:      "1200-Meru",
-				Coordinates: Coordinates{
+				Coordinates: &Coordinates{
 					Latitude:  "30.40338",
 					Longitude: "5.17403",
 				},

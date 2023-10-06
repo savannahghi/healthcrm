@@ -112,3 +112,30 @@ func (h *HealthCRMLib) GetFacilityByID(ctx context.Context, id string) (*Facilit
 
 	return facilityOutput, nil
 }
+
+// UpdateFacility is used to update facility's data
+func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayload *Facility) (*FacilityOutput, error) {
+	path := fmt.Sprintf("/v1/facilities/facilities/%s/", id)
+	response, err := h.client.MakeRequest(ctx, http.MethodPatch, path, nil, updatePayload)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to update facility in the registry with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var facilityOutput *FacilityOutput
+
+	err = json.Unmarshal(respBytes, &facilityOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilityOutput, nil
+}
