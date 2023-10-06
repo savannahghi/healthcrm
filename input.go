@@ -17,14 +17,12 @@ type Facility struct {
 
 // Coordinates models the geographical's location data class of a facility
 type Coordinates struct {
-	ID        string `json:"id"`
 	Latitude  string `json:"latitude"`
 	Longitude string `json:"longitude"`
 }
 
 // Contacts models facility's model data class
 type Contacts struct {
-	ID           string `json:"id"`
 	ContactType  string `json:"contact_type"`
 	ContactValue string `json:"contact_value"`
 	Role         string `json:"role"`
@@ -32,7 +30,6 @@ type Contacts struct {
 
 // Identifiers models facility's identifiers; can be MFL Code, Slade Code etc...
 type Identifiers struct {
-	ID              string `json:"id"`
 	IdentifierType  string `json:"identifier_type"`
 	IdentifierValue string `json:"identifier_value"`
 	ValidFrom       string `json:"valid_from"`
