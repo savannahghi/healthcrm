@@ -58,3 +58,30 @@ func (h *HealthCRMLib) CreateFacility(ctx context.Context, facility *Facility) (
 
 	return facilityResponse, nil
 }
+
+// GetFacilities is used to fetch facilities from health crm facility registry
+func (h *HealthCRMLib) GetFacilities(ctx context.Context) (*FacilityPage, error) {
+	path := "/v1/facilities/facilities/"
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to fetch facility(ies) in the registry with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var facilityPage *FacilityPage
+
+	err = json.Unmarshal(respBytes, &facilityPage)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilityPage, nil
+}
