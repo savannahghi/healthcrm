@@ -139,3 +139,33 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 
 	return facilityOutput, nil
 }
+
+// SearchFacility is used to search for facilities
+func (h *HealthCRMLib) SearchFacility(ctx context.Context, searchTerm string) (*FacilityPage, error) {
+	path := "/v1/facilities/facilities/"
+	queryParams := make(map[string]string)
+	queryParams["search"] = searchTerm
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to search facility in the registry with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var page *FacilityPage
+
+	err = json.Unmarshal(respBytes, &page)
+	if err != nil {
+		return nil, err
+	}
+
+	return page, nil
+}
