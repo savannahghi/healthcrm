@@ -66,7 +66,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 							ValidTo:         "2023-09-01",
 						},
 					},
-					BusinessHours: []any{},
+					BusinessHours: []BusinessHours{},
 				},
 			},
 			wantErr: false,
@@ -111,9 +111,17 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 							Latitude:  30.4556,
 							Longitude: 4.54556,
 						},
-						Contacts:      []ContactsOutput{},
-						Identifiers:   []IdentifiersOutput{},
-						BusinessHours: []any{},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
 					}
 					return httpmock.NewJsonResponse(http.StatusCreated, resp)
 				})
@@ -132,7 +140,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 						Coordinates:   &Coordinates{},
 						Contacts:      []Contacts{},
 						Identifiers:   []Identifiers{},
-						BusinessHours: []any{},
+						BusinessHours: []BusinessHours{},
 					}
 					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
 				})
@@ -214,9 +222,17 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 							Latitude:  30.4556,
 							Longitude: 4.54556,
 						},
-						Contacts:      []ContactsOutput{},
-						Identifiers:   []IdentifiersOutput{},
-						BusinessHours: []any{},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
 					}
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
@@ -311,9 +327,17 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 							Latitude:  30.4556,
 							Longitude: 4.54556,
 						},
-						Contacts:      []ContactsOutput{},
-						Identifiers:   []IdentifiersOutput{},
-						BusinessHours: []any{},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
 					}
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
@@ -418,9 +442,17 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 							Latitude:  30.4556,
 							Longitude: 4.54556,
 						},
-						Contacts:      []ContactsOutput{},
-						Identifiers:   []IdentifiersOutput{},
-						BusinessHours: []any{},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
 					}
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
