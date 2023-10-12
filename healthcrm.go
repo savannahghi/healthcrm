@@ -142,7 +142,7 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 
 // GetFacilityServices fetches services associated with facility
 func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID string) (*FacilityServicePage, error) {
-	path := "/v1/facilities/facilities/"
+	path := "/v1/facilities/services/"
 	queryParams := make(map[string]string)
 	queryParams["facility"] = facilityID
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
