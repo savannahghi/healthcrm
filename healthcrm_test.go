@@ -500,7 +500,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get facility services" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityServicePage{
 						Results: []FacilityService{
@@ -516,7 +516,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to get facility services" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
