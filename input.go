@@ -2,17 +2,17 @@ package healthcrm
 
 // Facility is the hospitals data class
 type Facility struct {
-	ID            string        `json:"id,omitempty"`
-	Name          string        `json:"name,omitempty"`
-	Description   string        `json:"description,omitempty"`
-	FacilityType  string        `json:"facility_type,omitempty"`
-	County        string        `json:"county,omitempty"`
-	Country       string        `json:"country,omitempty"`
-	Address       string        `json:"address,omitempty"`
-	Coordinates   *Coordinates  `json:"coordinates,omitempty"`
-	Contacts      []Contacts    `json:"contacts,omitempty"`
-	Identifiers   []Identifiers `json:"identifiers,omitempty"`
-	BusinessHours []any         `json:"businesshours,omitempty"`
+	ID            string          `json:"id,omitempty"`
+	Name          string          `json:"name,omitempty"`
+	Description   string          `json:"description,omitempty"`
+	FacilityType  string          `json:"facility_type,omitempty"`
+	County        string          `json:"county,omitempty"`
+	Country       string          `json:"country,omitempty"`
+	Address       string          `json:"address,omitempty"`
+	Coordinates   *Coordinates    `json:"coordinates,omitempty"`
+	Contacts      []Contacts      `json:"contacts,omitempty"`
+	Identifiers   []Identifiers   `json:"identifiers,omitempty"`
+	BusinessHours []BusinessHours `json:"businesshours,omitempty"`
 }
 
 // Coordinates models the geographical's location data class of a facility
@@ -34,4 +34,11 @@ type Identifiers struct {
 	IdentifierValue string `json:"identifier_value,omitempty"`
 	ValidFrom       string `json:"valid_from,omitempty"`
 	ValidTo         string `json:"valid_to,omitempty"`
+}
+
+// BusinessHours models data to store business hours
+type BusinessHours struct {
+	Day         string `json:"day"`
+	OpeningTime string `json:"opening_time"`
+	ClosingTime string `json:"closing_time"`
 }
