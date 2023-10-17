@@ -505,12 +505,26 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Happy case: get facility services",
+			name: "Happy case: get all services",
 			args: args{
-				ctx:        context.Background(),
-				facilityID: gofakeit.UUID(),
+				ctx: context.Background(),
 			},
 			wantErr: false,
+		},
+		{
+			name: "Happy case: get services in a facility",
+			args: args{
+				ctx:        context.Background(),
+				facilityID: "1b5baf1a-1aec-48bd-951c-01896e5fe5a8",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: unable to get all services",
+			args: args{
+				ctx: context.Background(),
+			},
+			wantErr: true,
 		},
 		{
 			name: "Sad case: unable to get facility services",
@@ -531,7 +545,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "Happy case: get facility services" {
+			if tt.name == "Happy case: get all services" {
 				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityServicePage{
@@ -547,8 +561,30 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
 			}
-			if tt.name == "Sad case: unable to get facility services" {
+			if tt.name == "Happy case: get services in a facility" {
+				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := &FacilityServicePage{
+						Results: []FacilityService{
+							{
+								ID:          gofakeit.UUID(),
+								Name:        gofakeit.BeerName(),
+								Description: gofakeit.HipsterSentence(56),
+								Identifiers: []*ServiceIdentifier{},
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Sad case: unable to get all services" {
 				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+			if tt.name == "Sad case: unable to get facility services" {
+				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})

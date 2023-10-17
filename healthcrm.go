@@ -143,18 +143,31 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 // GetFacilityServices fetches services associated with facility
 func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID string) (*FacilityServicePage, error) {
 	path := "/v1/facilities/services/"
-	queryParams := make(map[string]string)
-	queryParams["facility"] = facilityID
-	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
-	if err != nil {
-		return nil, err
+
+	var resp *http.Response
+	if facilityID != "" {
+		queryParams := make(map[string]string)
+		queryParams["facility"] = facilityID
+		response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		resp = response
+	} else {
+		response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		resp = response
 	}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to get facility services with status code: %v", response.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to get facility services with status code: %v", resp.StatusCode)
 	}
 
-	respBytes, err := io.ReadAll(response.Body)
+	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
 	}
