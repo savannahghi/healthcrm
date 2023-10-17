@@ -181,3 +181,33 @@ func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID strin
 
 	return facilityServicePage, nil
 }
+
+// GetFacilitiesOfferingAService fetches the facilities that offer a particular service
+func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, serviceID string) (*FacilityPage, error) {
+	path := "/v1/facilities/facilities/"
+
+	queryParams := make(map[string]string)
+	queryParams["service"] = serviceID
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unable to get facilities offering service with status code: %v", response.StatusCode)
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	var output *FacilityPage
+
+	err = json.Unmarshal(respBytes, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
