@@ -56,6 +56,7 @@ type FacilityOutput struct {
 	Contacts      []ContactsOutput      `json:"contacts"`
 	Identifiers   []IdentifiersOutput   `json:"identifiers"`
 	BusinessHours []BusinessHoursOutput `json:"businesshours"`
+	Services      []FacilityService     `json:"services"`
 }
 
 // BusinessHoursOutput models data that show facility's operational hours
