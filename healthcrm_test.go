@@ -498,6 +498,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		facilityID string
+		pagination *Pagination
 	}
 	tests := []struct {
 		name    string
@@ -508,6 +509,10 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 			name: "Happy case: get all services",
 			args: args{
 				ctx: context.Background(),
+				pagination: &Pagination{
+					Page:     "2",
+					PageSize: "5",
+				},
 			},
 			wantErr: false,
 		},
@@ -516,6 +521,10 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 			args: args{
 				ctx:        context.Background(),
 				facilityID: "1b5baf1a-1aec-48bd-951c-01896e5fe5a8",
+				pagination: &Pagination{
+					Page:     "2",
+					PageSize: "5",
+				},
 			},
 			wantErr: false,
 		},
@@ -562,7 +571,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 				})
 			}
 			if tt.name == "Happy case: get services in a facility" {
-				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8&page=2&page_size=5", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityServicePage{
 						Results: []FacilityService{
@@ -610,7 +619,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilityServices(tt.args.ctx, tt.args.facilityID)
+			_, err = h.GetFacilityServices(tt.args.ctx, tt.args.facilityID, tt.args.pagination)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilityServices() error = %v, wantErr %v", err, tt.wantErr)
 				return

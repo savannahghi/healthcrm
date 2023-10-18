@@ -142,45 +142,43 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 }
 
 // GetFacilityServices fetches services associated with facility
-func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID string) (*FacilityServicePage, error) {
+func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID string, pagination *Pagination) (*FacilityServicePage, error) {
 	path := "/v1/facilities/services/"
 
-	var resp *http.Response
-	if facilityID != "" {
-		queryParams := make(map[string]string)
-		queryParams["facility"] = facilityID
-		response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
-		if err != nil {
-			return nil, err
-		}
+	queryParams := make(map[string]string)
 
-		resp = response
-	} else {
-		response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		resp = response
+	if pagination != nil {
+		queryParams["page_size"] = pagination.PageSize
+		queryParams["page"] = pagination.Page
 	}
 
-	respBytes, err := io.ReadAll(resp.Body)
+	if facilityID != "" {
+		queryParams["facility"] = facilityID
+	}
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusOK {
 		return nil, errors.New(string(respBytes))
 	}
 
-	var facilityServicePage *FacilityServicePage
-
+	var facilityServicePage FacilityServicePage
 	err = json.Unmarshal(respBytes, &facilityServicePage)
 	if err != nil {
 		return nil, err
 	}
 
-	return facilityServicePage, nil
+	return &facilityServicePage, nil
 }
 
 // GetFacilitiesOfferingAService fetches the facilities that offer a particular service

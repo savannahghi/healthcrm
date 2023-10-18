@@ -42,3 +42,9 @@ type BusinessHours struct {
 	OpeningTime string `json:"opening_time"`
 	ClosingTime string `json:"closing_time"`
 }
+
+// Pagination is used to hold pagination values
+type Pagination struct {
+	Page     string `json:"page"`
+	PageSize string `json:"page_size"`
+}
