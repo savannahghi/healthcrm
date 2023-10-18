@@ -3,6 +3,7 @@ package healthcrm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,13 +41,13 @@ func (h *HealthCRMLib) CreateFacility(ctx context.Context, facility *Facility) (
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unable to create facility in the registry with status code: %v", response.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var facilityResponse *FacilityOutput
@@ -67,13 +68,13 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context) (*FacilityPage, error)
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to fetch facility(ies) in the registry with status code: %v", response.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var facilityPage *FacilityPage
@@ -94,13 +95,13 @@ func (h *HealthCRMLib) GetFacilityByID(ctx context.Context, id string) (*Facilit
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to fetch facility from the registry with status code: %v", response.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var facilityOutput *FacilityOutput
@@ -121,13 +122,13 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to update facility in the registry with status code: %v", response.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var facilityOutput *FacilityOutput
@@ -163,13 +164,13 @@ func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID strin
 		resp = response
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to get facility services with status code: %v", resp.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var facilityServicePage *FacilityServicePage
@@ -193,13 +194,13 @@ func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, servic
 		return nil, err
 	}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to get facilities offering service with status code: %v", response.StatusCode)
-	}
-
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
 	}
 
 	var output *FacilityPage
