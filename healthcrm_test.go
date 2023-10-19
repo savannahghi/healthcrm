@@ -630,8 +630,9 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 
 func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 	type args struct {
-		ctx       context.Context
-		serviceID string
+		ctx        context.Context
+		serviceID  string
+		pagination *Pagination
 	}
 	tests := []struct {
 		name    string
@@ -643,6 +644,10 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 			args: args{
 				ctx:       context.Background(),
 				serviceID: "227305a7-b9a5-4ca7-a211-71210d68206c",
+				pagination: &Pagination{
+					Page:     "1",
+					PageSize: "20",
+				},
 			},
 			wantErr: false,
 		},
@@ -650,6 +655,10 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 			name: "Sad case: unable to get facilities offering a service",
 			args: args{
 				ctx: context.Background(),
+				pagination: &Pagination{
+					Page:     "2",
+					PageSize: "20",
+				},
 			},
 			wantErr: true,
 		},
@@ -658,6 +667,10 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 			args: args{
 				ctx:       context.Background(),
 				serviceID: gofakeit.UUID(),
+				pagination: &Pagination{
+					Page:     "2",
+					PageSize: "20",
+				},
 			},
 			wantErr: true,
 		},
@@ -721,9 +734,256 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilitiesOfferingAService(tt.args.ctx, tt.args.serviceID)
+			_, err = h.GetFacilitiesOfferingAService(tt.args.ctx, tt.args.serviceID, tt.args.pagination)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilitiesOfferingAService() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestHealthCRMLib_CreateService(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		input FacilityServiceInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: create a service",
+			args: args{
+				ctx: context.Background(),
+				input: FacilityServiceInput{
+					Name:        "Oxygen Desaturation",
+					Description: "Oxygen desaturation",
+					Identifiers: []*ServiceIdentifierInput{
+						{
+							IdentifierType:  "CIEL",
+							IdentifierValue: "158211",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: unable to create a service",
+			args: args{
+				ctx: context.Background(),
+				input: FacilityServiceInput{
+					Name:        "Oxygen Desaturation",
+					Description: "Oxygen desaturation",
+					Identifiers: []*ServiceIdentifierInput{
+						{
+							IdentifierType:  "CIEL",
+							IdentifierValue: "158211",
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				input: FacilityServiceInput{
+					Name:        "Oxygen Desaturation",
+					Description: "Oxygen desaturation",
+					Identifiers: []*ServiceIdentifierInput{
+						{
+							IdentifierType:  "CIEL",
+							IdentifierValue: "158211",
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy case: create a service" {
+				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &FacilityService{
+						ID:          gofakeit.UUID(),
+						Name:        "Oxygen",
+						Description: "158211",
+						Identifiers: []*ServiceIdentifier{
+							{
+								ID:              gofakeit.UUID(),
+								IdentifierType:  "CIEL",
+								IdentifierValue: "158211",
+								ServiceID:       gofakeit.UUID(),
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Sad case: unable to create a service" {
+				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			_, err = h.CreateService(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.CreateService() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
+	type args struct {
+		ctx        context.Context
+		facilityID string
+		input      []*FacilityServiceInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: link facility to service",
+			args: args{
+				ctx:        context.Background(),
+				facilityID: "b6792568-564f-41ca-b951-69fae05e6ca1",
+				input: []*FacilityServiceInput{
+					{
+						Name:        "Renal Pain",
+						Description: "Renal Pain Description",
+						Identifiers: []*ServiceIdentifierInput{
+							{
+								IdentifierType:  "CIEL",
+								IdentifierValue: "127681",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: unable to link facility to service",
+			args: args{
+				ctx:        context.Background(),
+				facilityID: "b6792568-564f-41ca-b951-69fae05e6ca1",
+				input: []*FacilityServiceInput{
+					{
+						Name:        "Oxygen Desaturation",
+						Description: "Oxygen desaturation",
+						Identifiers: []*ServiceIdentifierInput{
+							{
+								IdentifierType:  "CIEL",
+								IdentifierValue: "158211",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx:        context.Background(),
+				facilityID: gofakeit.UUID(),
+				input: []*FacilityServiceInput{
+					{
+						Name:        "Oxygen Desaturation",
+						Description: "Oxygen desaturation",
+						Identifiers: []*ServiceIdentifierInput{
+							{
+								IdentifierType:  "CIEL",
+								IdentifierValue: "158211",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy case: link facility to service" {
+				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &FacilityService{
+						ID:          gofakeit.UUID(),
+						Name:        "Oxygen",
+						Description: "158211",
+						Identifiers: []*ServiceIdentifier{
+							{
+								ID:              gofakeit.UUID(),
+								IdentifierType:  "CIEL",
+								IdentifierValue: "158211",
+								ServiceID:       gofakeit.UUID(),
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+				})
+			}
+			if tt.name == "Sad case: unable to link facility to service" {
+				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.LinkServiceToFacility(tt.args.ctx, tt.args.facilityID, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.LinkServiceToFacility() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})

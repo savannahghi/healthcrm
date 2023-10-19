@@ -182,11 +182,17 @@ func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID strin
 }
 
 // GetFacilitiesOfferingAService fetches the facilities that offer a particular service
-func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, serviceID string) (*FacilityPage, error) {
+func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, serviceID string, pagination *Pagination) (*FacilityPage, error) {
 	path := "/v1/facilities/facilities/"
 
 	queryParams := make(map[string]string)
 	queryParams["service"] = serviceID
+
+	if pagination != nil {
+		queryParams["page_size"] = pagination.PageSize
+		queryParams["page"] = pagination.Page
+	}
+
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
 		return nil, err
@@ -202,6 +208,62 @@ func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, servic
 	}
 
 	var output *FacilityPage
+
+	err = json.Unmarshal(respBytes, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
+// CreateService is used to create a new service in health crm
+func (h *HealthCRMLib) CreateService(ctx context.Context, input FacilityServiceInput) (*FacilityService, error) {
+	path := "/v1/facilities/services/"
+
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, input)
+	if err != nil {
+		return nil, err
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var output *FacilityService
+
+	err = json.Unmarshal(respBytes, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
+// LinkServiceToFacility is used to link a service to a facility
+func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID string, input []*FacilityServiceInput) (*FacilityService, error) {
+	path := fmt.Sprintf("/v1/facilities/facilities/%s/add_services/", facilityID)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, input)
+	if err != nil {
+		return nil, err
+	}
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var output *FacilityService
 
 	err = json.Unmarshal(respBytes, &output)
 	if err != nil {
