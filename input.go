@@ -48,3 +48,16 @@ type Pagination struct {
 	Page     string `json:"page"`
 	PageSize string `json:"page_size"`
 }
+
+// FacilityServiceInput models is used to create a new service
+type FacilityServiceInput struct {
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	Identifiers []*ServiceIdentifierInput `json:"identifiers"`
+}
+
+// ServiceIdentifierInput is used to create an identifier
+type ServiceIdentifierInput struct {
+	IdentifierType  string `json:"identifier_type"`
+	IdentifierValue string `json:"identifier_value"`
+}
