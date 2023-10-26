@@ -65,22 +65,7 @@ func (cl *client) MakeRequest(ctx context.Context, method, path string, queryPar
 		}
 		request = req
 
-	case http.MethodPost:
-		encoded, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-
-		payload := bytes.NewBuffer(encoded)
-
-		req, err := http.NewRequestWithContext(ctx, method, urlPath, payload)
-		if err != nil {
-			return nil, err
-		}
-
-		request = req
-
-	case http.MethodPatch:
+	case http.MethodPost, http.MethodPatch:
 		encoded, err := json.Marshal(body)
 		if err != nil {
 			return nil, err

@@ -1,5 +1,7 @@
 package healthcrm
 
+import "fmt"
+
 // Facility is the hospitals data class
 type Facility struct {
 	ID            string          `json:"id,omitempty"`
@@ -15,10 +17,21 @@ type Facility struct {
 	BusinessHours []BusinessHours `json:"businesshours,omitempty"`
 }
 
-// Coordinates models the geographical's location data class of a facility
+// Coordinates represents geographical coordinates using latitude and longitude.
+// Latitude measures the north-south position, while longitude measures
+// the east-west position.
 type Coordinates struct {
 	Latitude  string `json:"latitude,omitempty"`
 	Longitude string `json:"longitude,omitempty"`
+}
+
+// ToString returns the location in comma-separated values format.
+// The order of values in the string is longitude,latitude.
+// The latitude and longitude are formatted up to 5 decimal places.
+// For example, if the Location has Latitude 36.79 and Longitude -1.29,
+// the returned string will be "-1.29, 36.79".
+func (c Coordinates) ToString() string {
+	return fmt.Sprintf("%v, %v", c.Longitude, c.Latitude)
 }
 
 // Contacts models facility's model data class
