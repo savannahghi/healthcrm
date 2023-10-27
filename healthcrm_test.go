@@ -176,7 +176,10 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 
 func TestHealthCRMLib_GetFacilities(t *testing.T) {
 	type args struct {
-		ctx context.Context
+		ctx        context.Context
+		location   *Coordinates
+		serviceIDs []string
+		pagination *Pagination
 	}
 	tests := []struct {
 		name    string
@@ -187,6 +190,11 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			name: "Happy case: fetch facility(ies)",
 			args: args{
 				ctx: context.Background(),
+				location: &Coordinates{
+					Latitude:  "-1.29",
+					Longitude: "36.79",
+				},
+				serviceIDs: []string{"1234"},
 			},
 			wantErr: false,
 		},
@@ -266,7 +274,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilities(tt.args.ctx)
+			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.pagination)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilities() error = %v, wantErr %v", err, tt.wantErr)
 				return
