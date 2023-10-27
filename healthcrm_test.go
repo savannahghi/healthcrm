@@ -502,7 +502,7 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 	}
 }
 
-func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
+func TestHealthCRMLib_GetServices(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		facilityID string
@@ -517,18 +517,6 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 			name: "Happy case: get all services",
 			args: args{
 				ctx: context.Background(),
-				pagination: &Pagination{
-					Page:     "2",
-					PageSize: "5",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Happy case: get services in a facility",
-			args: args{
-				ctx:        context.Background(),
-				facilityID: "1b5baf1a-1aec-48bd-951c-01896e5fe5a8",
 				pagination: &Pagination{
 					Page:     "2",
 					PageSize: "5",
@@ -578,22 +566,7 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
 			}
-			if tt.name == "Happy case: get services in a facility" {
-				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8&page=2&page_size=5", BaseURL)
-				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
-					resp := &FacilityServicePage{
-						Results: []FacilityService{
-							{
-								ID:          gofakeit.UUID(),
-								Name:        gofakeit.BeerName(),
-								Description: gofakeit.HipsterSentence(56),
-								Identifiers: []*ServiceIdentifier{},
-							},
-						},
-					}
-					return httpmock.NewJsonResponse(http.StatusOK, resp)
-				})
-			}
+
 			if tt.name == "Sad case: unable to get all services" {
 				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -627,9 +600,9 @@ func TestHealthCRMLib_GetFacilityServices(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilityServices(tt.args.ctx, tt.args.facilityID, tt.args.pagination)
+			_, err = h.GetServices(tt.args.ctx, tt.args.pagination)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("HealthCRMLib.GetFacilityServices() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("HealthCRMLib.GetServices() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})

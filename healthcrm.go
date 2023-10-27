@@ -120,8 +120,9 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 	return facilityOutput, nil
 }
 
-// GetFacilityServices fetches services associated with facility
-func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID string, pagination *Pagination) (*FacilityServicePage, error) {
+// GetServices retrieves a list of healthcare services provided by facilities
+// that are owned by a specific SIL service, such as Mycarehub or Advantage.
+func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination) (*FacilityServicePage, error) {
 	path := "/v1/facilities/services/"
 
 	queryParams := make(map[string]string)
@@ -131,9 +132,7 @@ func (h *HealthCRMLib) GetFacilityServices(ctx context.Context, facilityID strin
 		queryParams["page"] = pagination.Page
 	}
 
-	if facilityID != "" {
-		queryParams["facility"] = facilityID
-	}
+	queryParams["crm_service_code"] = crmServiceCode
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
