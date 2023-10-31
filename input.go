@@ -23,6 +23,7 @@ type Facility struct {
 type Coordinates struct {
 	Latitude  string `json:"latitude,omitempty"`
 	Longitude string `json:"longitude,omitempty"`
+	Radius    string `json:"radius,omitempty"`
 }
 
 // ToString returns the location in comma-separated values format.
@@ -30,8 +31,11 @@ type Coordinates struct {
 // The latitude and longitude are formatted up to 5 decimal places.
 // For example, if the Location has Latitude 36.79 and Longitude -1.29,
 // the returned string will be "-1.29, 36.79".
-func (c Coordinates) ToString() string {
-	return fmt.Sprintf("%v, %v", c.Longitude, c.Latitude)
+func (c Coordinates) ToString() (string, error) {
+	if c.Latitude == "" || c.Longitude == "" {
+		return "", fmt.Errorf("both Latitude and Longitude must be provided to generate the coordinates string")
+	}
+	return fmt.Sprintf("%v, %v", c.Longitude, c.Latitude), nil
 }
 
 // Contacts models facility's model data class

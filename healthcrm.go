@@ -285,7 +285,16 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 	}
 
 	if location != nil {
-		queryParams["ref_location"] = location.ToString()
+		coordinateString, err := location.ToString()
+		if err != nil {
+			return nil, err
+		}
+
+		queryParams["ref_location"] = coordinateString
+
+		if location.Radius != "" {
+			queryParams["distance"] = location.Radius
+		}
 	}
 
 	if len(serviceIDs) > 0 && searchParameter != "" {
