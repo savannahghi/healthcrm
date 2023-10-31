@@ -264,6 +264,8 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 //     service IDs. Facilities offering these services will be
 //     included in the results. You can pass multiple service
 //     IDs as separate arguments (e.g., GetFacilities(ctx, location, pagination, []string{"1234", "178"})).
+//   - searchParameter: A parameter used to search a facility by the facility name or a service name
+//     Note that this parameter cannot be passed together with the serviceIDs
 //
 // Usage:
 // Example 1: Retrieve facilities by location and service IDs:
@@ -274,7 +276,7 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 // This will return a list of all facilities ordered by the proximity
 //
 // Example 3: Retrieve all facilities without specifying location or services:
-func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, pagination *Pagination) (*FacilityPage, error) {
+func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, searchParameter string, pagination *Pagination) (*FacilityPage, error) {
 	queryParams := make(map[string]string)
 
 	if pagination != nil {
@@ -286,8 +288,18 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 		queryParams["ref_location"] = location.ToString()
 	}
 
-	for _, id := range serviceIDs {
-		queryParams["service"] = id
+	if len(serviceIDs) > 0 && searchParameter != "" {
+		return nil, errors.New("both service IDs and search parameter cannot be provided simultaneously")
+	}
+
+	if len(serviceIDs) > 0 {
+		for _, id := range serviceIDs {
+			queryParams["service"] = id
+		}
+	}
+
+	if searchParameter != "" {
+		queryParams["search"] = searchParameter
 	}
 
 	queryParams["crm_service_code"] = crmServiceCode
