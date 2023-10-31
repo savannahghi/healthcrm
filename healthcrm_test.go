@@ -176,10 +176,11 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 
 func TestHealthCRMLib_GetFacilities(t *testing.T) {
 	type args struct {
-		ctx        context.Context
-		location   *Coordinates
-		serviceIDs []string
-		pagination *Pagination
+		ctx             context.Context
+		location        *Coordinates
+		serviceIDs      []string
+		pagination      *Pagination
+		searchParameter string
 	}
 	tests := []struct {
 		name    string
@@ -195,6 +196,26 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 					Longitude: "36.79",
 				},
 				serviceIDs: []string{"1234"},
+				pagination: &Pagination{
+					Page:     "1",
+					PageSize: "10",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Happy case: search facility by service name",
+			args: args{
+				ctx: context.Background(),
+				location: &Coordinates{
+					Latitude:  "-1.29",
+					Longitude: "36.79",
+				},
+				searchParameter: "prep",
+				pagination: &Pagination{
+					Page:     "1",
+					PageSize: "10",
+				},
 			},
 			wantErr: false,
 		},
@@ -212,10 +233,50 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Sad Case: Pass both service IDs and search parameter",
+			args: args{
+				ctx:             context.Background(),
+				serviceIDs:      []string{"1234"},
+				searchParameter: "Nairobi",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: fetch facility(ies)" {
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := &FacilityOutput{
+						ID:           gofakeit.UUID(),
+						Name:         gofakeit.BeerName(),
+						Description:  gofakeit.HipsterSentence(50),
+						FacilityType: "HOSPITAL",
+						County:       "Baringo",
+						Country:      "KE",
+						Address:      "",
+						Coordinates: CoordinatesOutput{
+							Latitude:  30.4556,
+							Longitude: 4.54556,
+						},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Happy case: search facility by service name" {
 				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
@@ -274,7 +335,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.pagination)
+			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.searchParameter, tt.args.pagination)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilities() error = %v, wantErr %v", err, tt.wantErr)
 				return
