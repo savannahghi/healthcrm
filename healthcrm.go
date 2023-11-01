@@ -337,3 +337,34 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 
 	return facilityPage, nil
 }
+
+// GetService is used to fetch a single service given its ID
+func (h *HealthCRMLib) GetService(ctx context.Context, serviceID string) (*FacilityService, error) {
+	path := fmt.Sprintf("/v1/facilities/services/%s", serviceID)
+
+	queryParams := make(map[string]string)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var service FacilityService
+	err = json.Unmarshal(respBytes, &service)
+	if err != nil {
+		return nil, err
+	}
+
+	return &service, nil
+}
