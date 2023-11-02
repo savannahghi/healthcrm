@@ -43,20 +43,21 @@ type IdentifiersOutput struct {
 
 // FacilityOutput is used to display facility(ies)
 type FacilityOutput struct {
-	ID            string                `json:"id"`
-	Created       time.Time             `json:"created"`
-	Name          string                `json:"name"`
-	Description   string                `json:"description"`
-	FacilityType  string                `json:"facility_type"`
-	County        string                `json:"county"`
-	Country       string                `json:"country"`
-	Coordinates   CoordinatesOutput     `json:"coordinates"`
-	Status        string                `json:"status"`
-	Address       string                `json:"address"`
-	Contacts      []ContactsOutput      `json:"contacts"`
-	Identifiers   []IdentifiersOutput   `json:"identifiers"`
-	BusinessHours []BusinessHoursOutput `json:"businesshours"`
-	Services      []FacilityService     `json:"services"`
+	ID            string                `json:"id,omitempty"`
+	Created       time.Time             `json:"created,omitempty"`
+	Name          string                `json:"name,omitempty"`
+	Description   string                `json:"description,omitempty"`
+	FacilityType  string                `json:"facility_type,omitempty"`
+	County        string                `json:"county,omitempty"`
+	Country       string                `json:"country,omitempty"`
+	Coordinates   CoordinatesOutput     `json:"coordinates,omitempty"`
+	Distance      string                `json:"distance,omitempty"`
+	Status        string                `json:"status,omitempty"`
+	Address       string                `json:"address,omitempty"`
+	Contacts      []ContactsOutput      `json:"contacts,omitempty"`
+	Identifiers   []IdentifiersOutput   `json:"identifiers,omitempty"`
+	BusinessHours []BusinessHoursOutput `json:"businesshours,omitempty"`
+	Services      []FacilityService     `json:"services,omitempty"`
 }
 
 // BusinessHoursOutput models data that show facility's operational hours
