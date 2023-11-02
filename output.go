@@ -51,7 +51,7 @@ type FacilityOutput struct {
 	County        string                `json:"county,omitempty"`
 	Country       string                `json:"country,omitempty"`
 	Coordinates   CoordinatesOutput     `json:"coordinates,omitempty"`
-	Distance      string                `json:"distance,omitempty"`
+	Distance      float64               `json:"distance,omitempty"`
 	Status        string                `json:"status,omitempty"`
 	Address       string                `json:"address,omitempty"`
 	Contacts      []ContactsOutput      `json:"contacts,omitempty"`
