@@ -48,7 +48,7 @@ func newClient() (*client, error) {
 }
 
 // MakeRequest performs a HTTP request to the provided path and parameters
-func (cl *client) MakeRequest(ctx context.Context, method, path string, queryParams map[string]string, body interface{}) (*http.Response, error) {
+func (cl *client) MakeRequest(ctx context.Context, method, path string, queryParams url.Values, body interface{}) (*http.Response, error) {
 	oauthResponse, err := cl.authClient.Authenticate()
 	if err != nil {
 		return nil, err
@@ -90,13 +90,8 @@ func (cl *client) MakeRequest(ctx context.Context, method, path string, queryPar
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", oauthResponse.AccessToken))
 
 	if queryParams != nil {
-		q := url.Values{}
 
-		for key, value := range queryParams {
-			q.Add(key, value)
-		}
-
-		request.URL.RawQuery = q.Encode()
+		request.URL.RawQuery = queryParams.Encode()
 	}
 
 	return cl.httpClient.Do(request)

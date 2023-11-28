@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -22,12 +23,14 @@ func (m *MockAuthUtilsLib) Authenticate() (*authutils.OAUTHResponse, error) {
 
 func TestMakeRequest(t *testing.T) {
 	ctx := context.Background()
+	queryParam := url.Values{}
+	queryParam.Add("param1", "value1")
 
 	tests := []struct {
 		name        string
 		method      string
 		path        string
-		queryParams map[string]string
+		queryParams url.Values
 		body        interface{}
 		want        int
 	}{
@@ -35,7 +38,7 @@ func TestMakeRequest(t *testing.T) {
 			name:        "Happy case: GET Request",
 			method:      http.MethodGet,
 			path:        "/v1/facilities/facilities/",
-			queryParams: map[string]string{"param1": "value1"},
+			queryParams: queryParam,
 			body: &Facility{
 				Name:         "Test Facility",
 				Description:  "A test facility",
