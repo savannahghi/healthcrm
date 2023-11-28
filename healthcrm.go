@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/savannahghi/serverutils"
 )
@@ -125,14 +126,14 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination) (*FacilityServicePage, error) {
 	path := "/v1/facilities/services/"
 
-	queryParams := make(map[string]string)
+	queryParams := url.Values{}
 
 	if pagination != nil {
-		queryParams["page_size"] = pagination.PageSize
-		queryParams["page"] = pagination.Page
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
 	}
 
-	queryParams["crm_service_code"] = crmServiceCode
+	queryParams.Add("crm_service_code", crmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
@@ -163,12 +164,12 @@ func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination) 
 func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, serviceID string, pagination *Pagination) (*FacilityPage, error) {
 	path := "/v1/facilities/facilities/"
 
-	queryParams := make(map[string]string)
-	queryParams["service"] = serviceID
+	queryParams := url.Values{}
+	queryParams.Add("service", serviceID)
 
 	if pagination != nil {
-		queryParams["page_size"] = pagination.PageSize
-		queryParams["page"] = pagination.Page
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
 	}
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
@@ -277,11 +278,11 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 //
 // Example 3: Retrieve all facilities without specifying location or services:
 func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, searchParameter string, pagination *Pagination) (*FacilityPage, error) {
-	queryParams := make(map[string]string)
+	queryParams := url.Values{}
 
 	if pagination != nil {
-		queryParams["page_size"] = pagination.PageSize
-		queryParams["page"] = pagination.Page
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
 	}
 
 	if location != nil {
@@ -290,10 +291,10 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 			return nil, err
 		}
 
-		queryParams["ref_location"] = coordinateString
+		queryParams.Add("ref_location", coordinateString)
 
 		if location.Radius != "" {
-			queryParams["distance"] = location.Radius
+			queryParams.Add("distance", location.Radius)
 		}
 	}
 
@@ -303,15 +304,15 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 
 	if len(serviceIDs) > 0 {
 		for _, id := range serviceIDs {
-			queryParams["service"] = id
+			queryParams.Add("service", id)
 		}
 	}
 
 	if searchParameter != "" {
-		queryParams["search"] = searchParameter
+		queryParams.Add("search", searchParameter)
 	}
 
-	queryParams["crm_service_code"] = crmServiceCode
+	queryParams.Add("crm_service_code", crmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, facilitiesPath, queryParams, nil)
 	if err != nil {
@@ -342,9 +343,7 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 func (h *HealthCRMLib) GetService(ctx context.Context, serviceID string) (*FacilityService, error) {
 	path := fmt.Sprintf("/v1/facilities/services/%s", serviceID)
 
-	queryParams := make(map[string]string)
-
-	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
 	if err != nil {
 		return nil, err
 	}

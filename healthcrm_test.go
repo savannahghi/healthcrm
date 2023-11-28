@@ -204,6 +204,22 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Happy case: fetch facilities",
+			args: args{
+				ctx: context.Background(),
+				location: &Coordinates{
+					Latitude:  "-1.29",
+					Longitude: "36.79",
+				},
+				serviceIDs: []string{"1234", "4567"},
+				pagination: &Pagination{
+					Page:     "1",
+					PageSize: "10",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Happy case: search facility by service name",
 			args: args{
 				ctx: context.Background(),
@@ -272,6 +288,66 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 							},
 						},
 					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Happy case: fetch facilities" {
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+
+					service1 := &FacilityOutput{
+						ID:           gofakeit.UUID(),
+						Name:         gofakeit.BeerName(),
+						Description:  gofakeit.HipsterSentence(50),
+						FacilityType: "HOSPITAL",
+						County:       "Baringo",
+						Country:      "KE",
+						Address:      "",
+						Coordinates: CoordinatesOutput{
+							Latitude:  30.4556,
+							Longitude: 4.54556,
+						},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
+					}
+					service2 := &FacilityOutput{
+						ID:           gofakeit.UUID(),
+						Name:         gofakeit.BeerName(),
+						Description:  gofakeit.HipsterSentence(50),
+						FacilityType: "HOSPITAL",
+						County:       "Nairobi",
+						Country:      "KE",
+						Address:      "",
+						Coordinates: CoordinatesOutput{
+							Latitude:  30.4556,
+							Longitude: 4.54556,
+						},
+						Contacts:    []ContactsOutput{},
+						Identifiers: []IdentifiersOutput{},
+						BusinessHours: []BusinessHoursOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Day:         "MONDAY",
+								OpeningTime: "08:00:01",
+								ClosingTime: "18:00:01",
+								FacilityID:  gofakeit.UUID(),
+							},
+						},
+					}
+
+					resp := &FacilityPage{
+						Results: []FacilityOutput{*service1, *service2},
+					}
+
 					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
 			}
