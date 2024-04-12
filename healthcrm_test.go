@@ -1199,3 +1199,142 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_CreateProfile(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		profile *ProfileInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy Case: Create Profile",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					FirstName:     "TestProfile",
+					LastName:      "BikoTest",
+					OtherName:     "SteveTest",
+					DateOfBirth:   gofakeit.Date().String(),
+					Gender:        "MALE",
+					EnrolmentDate: "2023-09-01",
+					SladeCode:     "6000",
+					ServiceCode:   "50",
+					Contacts: []*ProfileContactInput{
+						{
+							ContactType:  "PHONE_NUMBER",
+							ContactValue: "+254788223223",
+						},
+					},
+					Identifiers: []*ProfileIdentifierInput{
+						{
+							IdentifierType:  "SLADE_CODE",
+							IdentifierValue: "3243",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad Case: Unable To Create Profile",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					FirstName: gofakeit.FirstName(),
+					LastName:  gofakeit.LastName(),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad Case: Unable To Make Request",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					FirstName: gofakeit.FirstName(),
+					LastName:  gofakeit.LastName(),
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy Case: Create Profile" {
+				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &ProfileOutput{
+						FirstName:     gofakeit.FirstName(),
+						LastName:      gofakeit.LastName(),
+						OtherName:     gofakeit.BeerName(),
+						DateOfBirth:   gofakeit.Date().String(),
+						Gender:        gofakeit.Gender(),
+						EnrolmentDate: gofakeit.Date().String(),
+						SladeCode:     "50202",
+						ServiceCode:   "50",
+						Contacts: []*ProfileContactOutput{
+							{
+								ContactType:  "PHONE_NUMBER",
+								ContactValue: "+254788223223",
+							},
+						},
+						Identifiers: []*ProfileIdentifierOutput{
+							{
+								IdentifierType:  "SLADE_CODE",
+								IdentifierValue: "3243",
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+				})
+			}
+			if tt.name == "Sad Case: Unable To Create Profile" {
+				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &ProfileInput{
+						FirstName:     gofakeit.FirstName(),
+						LastName:      gofakeit.LastName(),
+						OtherName:     gofakeit.BeerName(),
+						DateOfBirth:   gofakeit.Date().String(),
+						Gender:        gofakeit.Gender(),
+						EnrolmentDate: gofakeit.Date().String(),
+						SladeCode:     "50202",
+						ServiceCode:   "50",
+						Contacts:      []*ProfileContactInput{},
+						Identifiers:   []*ProfileIdentifierInput{},
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+			if tt.name == "Sad Case: Unable To Make Request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			_, err = h.CreateProfile(tt.args.ctx, tt.args.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.CreateProfile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}

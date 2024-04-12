@@ -367,3 +367,32 @@ func (h *HealthCRMLib) GetService(ctx context.Context, serviceID string) (*Facil
 
 	return &service, nil
 }
+
+// CreateProfile is used to create profile in health CRM service
+func (h *HealthCRMLib) CreateProfile(ctx context.Context, profile *ProfileInput) (*ProfileOutput, error) {
+	path := "/v1/identities/profiles/"
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var profileResponse *ProfileOutput
+
+	err = json.Unmarshal(respBytes, &profileResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return profileResponse, nil
+}
