@@ -9,3 +9,4 @@ coverage.json
 coverage_report.txt
 .vscode/
 venv
+.env/
