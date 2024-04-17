@@ -397,8 +397,9 @@ func (h *HealthCRMLib) CreateProfile(ctx context.Context, profile *ProfileInput)
 		return nil, fmt.Errorf("could not read response: %w", err)
 	}
 
-	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New(string(respBytes))
+	if response.StatusCode != http.StatusAccepted {
+		err := fmt.Errorf("unexpected status %v returned", response.StatusCode)
+		return nil, err
 	}
 
 	var profileResponse *ProfileOutput
