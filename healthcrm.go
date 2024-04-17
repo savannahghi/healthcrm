@@ -48,6 +48,8 @@ func (h *HealthCRMLib) CreateFacility(ctx context.Context, facility *Facility) (
 		return nil, err
 	}
 
+	defer response.Body.Close()
+
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
@@ -75,6 +77,8 @@ func (h *HealthCRMLib) GetFacilityByID(ctx context.Context, id string) (*Facilit
 		return nil, err
 	}
 
+	defer response.Body.Close()
+
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
@@ -101,6 +105,8 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 	if err != nil {
 		return nil, err
 	}
+
+	defer response.Body.Close()
 
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -177,6 +183,8 @@ func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, servic
 		return nil, err
 	}
 
+	defer response.Body.Close()
+
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
@@ -205,6 +213,8 @@ func (h *HealthCRMLib) CreateService(ctx context.Context, input FacilityServiceI
 		return nil, err
 	}
 
+	defer response.Body.Close()
+
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
@@ -232,6 +242,8 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 	if err != nil {
 		return nil, err
 	}
+
+	defer response.Body.Close()
 
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -318,6 +330,8 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 	if err != nil {
 		return nil, err
 	}
+
+	defer response.Body.Close()
 
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
