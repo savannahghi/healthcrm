@@ -1215,6 +1215,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				profile: &ProfileInput{
+					ProfileID:     gofakeit.UUID(),
 					FirstName:     "TestProfile",
 					LastName:      "BikoTest",
 					OtherName:     "SteveTest",
@@ -1268,34 +1269,19 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileOutput{
-						FirstName:     gofakeit.FirstName(),
-						LastName:      gofakeit.LastName(),
-						OtherName:     gofakeit.BeerName(),
-						DateOfBirth:   gofakeit.Date().String(),
-						Gender:        gofakeit.Gender(),
-						EnrolmentDate: gofakeit.Date().String(),
-						SladeCode:     "50202",
-						ServiceCode:   "50",
-						Contacts: []*ProfileContactOutput{
-							{
-								ContactType:  "PHONE_NUMBER",
-								ContactValue: "+254788223223",
-							},
-						},
-						Identifiers: []*ProfileIdentifierOutput{
-							{
-								IdentifierType:  "SLADE_CODE",
-								IdentifierValue: "3243",
-							},
-						},
+						ID:        gofakeit.UUID(),
+						ProfileID: gofakeit.UUID(),
+						HealthID:  "50932",
+						SladeCode: "50202",
 					}
-					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+					return httpmock.NewJsonResponse(http.StatusAccepted, resp)
 				})
 			}
 			if tt.name == "Sad Case: Unable To Create Profile" {
 				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileInput{
+						ProfileID:     gofakeit.UUID(),
 						FirstName:     gofakeit.FirstName(),
 						LastName:      gofakeit.LastName(),
 						OtherName:     gofakeit.BeerName(),

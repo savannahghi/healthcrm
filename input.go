@@ -81,6 +81,7 @@ type ServiceIdentifierInput struct {
 
 // ProfileInput is the host of users data or a brief description of a person
 type ProfileInput struct {
+	ProfileID     string                    `json:"profile_id"`
 	FirstName     string                    `json:"first_name"`
 	LastName      string                    `json:"last_name"`
 	OtherName     string                    `json:"other_name"`

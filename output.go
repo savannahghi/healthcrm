@@ -100,35 +100,8 @@ type ServiceIdentifier struct {
 
 // ProfileOutput is used to display profile(s)
 type ProfileOutput struct {
-	ID            string                     `json:"id,omitempty"`
-	Created       string                     `json:"created,omitempty"`
-	Active        bool                       `json:"active"`
-	FirstName     string                     `json:"first_name"`
-	LastName      string                     `json:"last_name"`
-	OtherName     string                     `json:"other_name"`
-	DateOfBirth   string                     `json:"date_of_birth"`
-	Gender        string                     `json:"gender"`
-	EnrolmentDate string                     `json:"enrolment_date"`
-	SladeCode     string                     `json:"slade_code"`
-	ServiceCode   string                     `json:"service_code"`
-	Contacts      []*ProfileContactOutput    `json:"contacts,omitempty"`
-	Identifiers   []*ProfileIdentifierOutput `json:"identifiers,omitempty"`
-}
-
-// ProfileContactOutput is used to show profile contacts
-type ProfileContactOutput struct {
-	ID           string `json:"id"`
-	ContactType  string `json:"contact_type"`
-	ContactValue string `json:"contact_value"`
-	DateVerified string `json:"date_verified"`
-	Verified     bool   `json:"verifed,omitempty"`
-}
-
-// ProfileIndentifierOutput is used to display profile identifiers
-type ProfileIdentifierOutput struct {
-	ID              string `json:"id"`
-	IdentifierType  string `json:"identifier_type"`
-	IdentifierValue string `json:"identifier_value"`
-	ValidFrom       string `json:"valid_from"`
-	ValidTo         string `json:"valid_to"`
+	ID        string `json:"id"`
+	ProfileID string `json:"profile_id"`
+	HealthID  string `json:"health_id,omitempty"`
+	SladeCode string `json:"slade_code"`
 }
