@@ -19,8 +19,6 @@ var (
 
 const (
 	facilitiesPath = "/v1/facilities/facilities/"
-	// TODO: use an environment variable
-	crmServiceCode = "05"
 )
 
 // HealthCRMLib interacts with the healthcrm APIs
@@ -129,7 +127,7 @@ func (h *HealthCRMLib) UpdateFacility(ctx context.Context, id string, updatePayl
 
 // GetServices retrieves a list of healthcare services provided by facilities
 // that are owned by a specific SIL service, such as Mycarehub or Advantage.
-func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination) (*FacilityServicePage, error) {
+func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination, crmServiceCode string) (*FacilityServicePage, error) {
 	path := "/v1/facilities/services/"
 
 	queryParams := url.Values{}
@@ -289,7 +287,7 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 // This will return a list of all facilities ordered by the proximity
 //
 // Example 3: Retrieve all facilities without specifying location or services:
-func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, searchParameter string, pagination *Pagination) (*FacilityPage, error) {
+func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, searchParameter string, pagination *Pagination, crmServiceCode string) (*FacilityPage, error) {
 	queryParams := url.Values{}
 
 	if pagination != nil {
