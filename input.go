@@ -1,6 +1,8 @@
 package healthcrm
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Facility is the hospitals data class
 type Facility struct {
@@ -96,12 +98,12 @@ type ProfileInput struct {
 
 // ProfileIdentifierInput is used to create profile(s) identifier(s)
 type ProfileIdentifierInput struct {
-	IdentifierValue string `json:"identifier_value"`
-	IdentifierType  string `json:"identifier_type"`
+	IdentifierType  IdentifierType `json:"identifier_type"`
+	IdentifierValue string         `json:"identifier_value"`
 }
 
 // ProfileContanctInput is used to create profile(s) contact(s)
 type ProfileContactInput struct {
-	ContactType  string `json:"contact_type"`
-	ContactValue string `json:"contact_value"`
+	ContactType  ContactType `json:"contact_type"`
+	ContactValue string      `json:"contact_value"`
 }
