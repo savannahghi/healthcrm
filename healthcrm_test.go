@@ -181,6 +181,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 		serviceIDs      []string
 		pagination      *Pagination
 		searchParameter string
+		crmServiceCode  string
 	}
 	tests := []struct {
 		name    string
@@ -200,6 +201,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 					Page:     "1",
 					PageSize: "10",
 				},
+				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -216,6 +218,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 					Page:     "1",
 					PageSize: "10",
 				},
+				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -232,6 +235,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 					Page:     "1",
 					PageSize: "10",
 				},
+				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -411,7 +415,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.searchParameter, tt.args.pagination)
+			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.searchParameter, tt.args.pagination, tt.args.crmServiceCode)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilities() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -641,9 +645,10 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 
 func TestHealthCRMLib_GetServices(t *testing.T) {
 	type args struct {
-		ctx        context.Context
-		facilityID string
-		pagination *Pagination
+		ctx            context.Context
+		facilityID     string
+		pagination     *Pagination
+		crmServiceCode string
 	}
 	tests := []struct {
 		name    string
@@ -658,6 +663,7 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 					Page:     "2",
 					PageSize: "5",
 				},
+				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -737,7 +743,7 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetServices(tt.args.ctx, tt.args.pagination)
+			_, err = h.GetServices(tt.args.ctx, tt.args.pagination, tt.args.crmServiceCode)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetServices() error = %v, wantErr %v", err, tt.wantErr)
 				return
