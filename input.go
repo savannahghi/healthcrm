@@ -102,8 +102,8 @@ type ProfileIdentifierInput struct {
 	IdentifierType  IdentifierType `json:"identifier_type"`
 	IdentifierValue string         `json:"identifier_value"`
 	Verified        bool           `json:"verified"`
-	ValidFrom       time.Time      `json:"valid_from,omitempty"`
-	ValidTo         time.Time      `json:"valid_to,omitempty"`
+	ValidFrom       *time.Time     `json:"valid_from,omitempty"`
+	ValidTo         *time.Time     `json:"valid_to,omitempty"`
 }
 
 // ProfileContanctInput is used to create profile(s) contact(s)
@@ -111,6 +111,6 @@ type ProfileContactInput struct {
 	ContactType  ContactType `json:"contact_type"`
 	ContactValue string      `json:"contact_value"`
 	Verified     bool        `json:"verified"`
-	ValidFrom    time.Time   `json:"valid_from,omitempty"`
-	ValidTo      time.Time   `json:"valid_to,omitempty"`
+	ValidFrom    *time.Time  `json:"valid_from,omitempty"`
+	ValidTo      *time.Time  `json:"valid_to,omitempty"`
 }
