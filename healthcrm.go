@@ -409,3 +409,52 @@ func (h *HealthCRMLib) CreateProfile(ctx context.Context, profile *ProfileInput)
 
 	return profileResponse, nil
 }
+
+// GetMultipleServices is used to fetch multiple services
+//
+// Parameters:
+//   - serviceIDs: A parameter that is a list of IDs specifying one or more
+//     service IDs. Service identifiers identifying these services will be
+//     included in the results. You can **ONLY** pass a single or multiple service
+//     IDs which should be of type **UUID** (e.g., GetMultipleServices(ctx, []string{"0fee2792-dffc-40d3-a744-2a70732b1053",
+//     "56c62083-c7b4-4055-8d44-6cc7446ac1d0", "8474ea55-8ede-4bc6-aa67-f53ed5456a03"})).
+func (h *HealthCRMLib) GetMultipleServices(ctx context.Context, servicesIDs []string) ([]*FacilityService, error) {
+	if len(servicesIDs) < 1 || servicesIDs == nil {
+		return nil, fmt.Errorf("no service IDs provided")
+	}
+
+	searchParameter := servicesIDs[0]
+	for idx, id := range servicesIDs {
+		if idx == 0 {
+			continue
+		}
+
+		searchParameter += fmt.Sprintf(",%s", id)
+	}
+
+	path := fmt.Sprintf("/v1/facilities/services?service_ids=%s", searchParameter)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var services *FacilityServices
+	err = json.Unmarshal(respBytes, &services)
+	if err != nil {
+		return nil, err
+	}
+
+	return services.Results, nil
+}
