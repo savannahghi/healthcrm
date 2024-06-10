@@ -458,3 +458,52 @@ func (h *HealthCRMLib) GetMultipleServices(ctx context.Context, servicesIDs []st
 
 	return services.Results, nil
 }
+
+// GetMultipleFacilities is used to fetch multiple facilities
+//
+// Parameters:
+//   - facilityIDs: A parameter that is a list of IDs specifying one or more
+//     facility IDs. Facility identifiers, contacts, services and business hours linked to a facility will be
+//     included in the results. You can **ONLY** pass a single or multiple facility
+//     IDs which should be of type **UUID** (e.g., GetMultipleFacilities(ctx, []string{"0fee2792-dffc-40d3-a744-2a70732b1053",
+//     "56c62083-c7b4-4055-8d44-6cc7446ac1d0", "8474ea55-8ede-4bc6-aa67-f53ed5456a03"})).
+func (h *HealthCRMLib) GetMultipleFacilities(ctx context.Context, facilityIDs []string) ([]*FacilityOutput, error) {
+	if len(facilityIDs) < 1 || facilityIDs == nil {
+		return nil, fmt.Errorf("no facility IDs provided")
+	}
+
+	searchParameter := facilityIDs[0]
+	for idx, id := range facilityIDs {
+		if idx == 0 {
+			continue
+		}
+
+		searchParameter += fmt.Sprintf(",%s", id)
+	}
+
+	path := fmt.Sprintf("/v1/facilities/facilities?facility_ids=%s", searchParameter)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var facilities *FacilityOutputs
+	err = json.Unmarshal(respBytes, &facilities)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilities.Results, nil
+}
