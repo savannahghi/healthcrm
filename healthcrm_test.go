@@ -1330,3 +1330,145 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
+	type args struct {
+		ctx         context.Context
+		servicesIDs []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: get list of services",
+			args: args{
+				ctx: context.Background(),
+				servicesIDs: []string{
+					"0fee2792-dffc-40d3-a744-2a70732b1053",
+					"56c62083-c7b4-4055-8d44-6cc7446ac1d0",
+					"8474ea55-8ede-4bc6-aa67-f53ed5456a03",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: no service IDs provided(empty list)",
+			args: args{
+				ctx:         context.Background(),
+				servicesIDs: []string{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: no service IDs provided(nil)",
+			args: args{
+				ctx:         context.Background(),
+				servicesIDs: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to get services",
+			args: args{
+				ctx: context.Background(),
+				servicesIDs: []string{
+					"0fee2792-dffc-40d3-a744-2a70732b1053",
+					"56c62083-c7b4-4055-8d44-6cc7446ac1d0",
+					"8474ea55-8ede-4bc6-aa67-f53ed5456a03",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				servicesIDs: []string{
+					"0fee2792-dffc-40d3-a744-2a70732b1053",
+					"56c62083-c7b4-4055-8d44-6cc7446ac1d0",
+					"8474ea55-8ede-4bc6-aa67-f53ed5456a03",
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := fmt.Sprintf("%s/v1/facilities/services?service_ids=0fee2792-dffc-40d3-a744-2a70732b1053,56c62083-c7b4-4055-8d44-6cc7446ac1d0,8474ea55-8ede-4bc6-aa67-f53ed5456a03", BaseURL)
+
+			if tt.name == "Happy case: get list of services" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := FacilityServices{
+						Results: []*FacilityService{
+							{
+								ID:          gofakeit.UUID(),
+								Name:        "Oxygen",
+								Description: "158211",
+								Identifiers: []*ServiceIdentifier{
+									{
+										ID:              gofakeit.UUID(),
+										IdentifierType:  "CIEL",
+										IdentifierValue: "158211",
+										ServiceID:       gofakeit.UUID(),
+									},
+								},
+							},
+							{
+								ID:          gofakeit.UUID(),
+								Name:        "Oxygen",
+								Description: "158211",
+								Identifiers: []*ServiceIdentifier{
+									{
+										ID:              gofakeit.UUID(),
+										IdentifierType:  "CIEL",
+										IdentifierValue: "158211",
+										ServiceID:       gofakeit.UUID(),
+									},
+								},
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: unable to get a services" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+
+			MockAuthenticate()
+
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.GetMultipleServices(tt.args.ctx, tt.args.servicesIDs)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetMultipleServices() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}

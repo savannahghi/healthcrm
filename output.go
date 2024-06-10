@@ -105,3 +105,8 @@ type ProfileOutput struct {
 	HealthID  string `json:"health_id,omitempty"`
 	SladeCode string `json:"slade_code"`
 }
+
+// FacilityServices is used to get a list of Facility Services
+type FacilityServices struct {
+	Results []*FacilityService `json:"results"`
+}
