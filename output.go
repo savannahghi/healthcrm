@@ -106,7 +106,12 @@ type ProfileOutput struct {
 	SladeCode string `json:"slade_code"`
 }
 
-// FacilityServices is used to get a list of Facility Services
+// FacilityServices is used to get a list of facility Services
 type FacilityServices struct {
 	Results []*FacilityService `json:"results"`
+}
+
+// FacilityOutputs is used to get a list of facilities
+type FacilityOutputs struct {
+	Results []*FacilityOutput `json:"results"`
 }

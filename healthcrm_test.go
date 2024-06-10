@@ -1472,3 +1472,129 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
+	type args struct {
+		ctx         context.Context
+		facilityIDs []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: get list of facilities",
+			args: args{
+				ctx: context.Background(),
+				facilityIDs: []string{
+					"556a1dd9-fbb5-40c2-a623-dde9a2335597",
+					"7f59c528-8d9e-4a97-a9e5-bea7d7938c0e",
+					"b8246d32-b9e7-422c-b3bb-a1066dec8561",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: no facility IDs provided(empty list)",
+			args: args{
+				ctx:         context.Background(),
+				facilityIDs: []string{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: no facility IDs provided(nil)",
+			args: args{
+				ctx:         context.Background(),
+				facilityIDs: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to get services",
+			args: args{
+				ctx: context.Background(),
+				facilityIDs: []string{
+					"556a1dd9-fbb5-40c2-a623-dde9a2335597",
+					"7f59c528-8d9e-4a97-a9e5-bea7d7938c0e",
+					"b8246d32-b9e7-422c-b3bb-a1066dec8561",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				facilityIDs: []string{
+					"556a1dd9-fbb5-40c2-a623-dde9a2335597",
+					"7f59c528-8d9e-4a97-a9e5-bea7d7938c0e",
+					"b8246d32-b9e7-422c-b3bb-a1066dec8561",
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := fmt.Sprintf("%s/v1/facilities/facilities?facility_ids=556a1dd9-fbb5-40c2-a623-dde9a2335597,7f59c528-8d9e-4a97-a9e5-bea7d7938c0e,b8246d32-b9e7-422c-b3bb-a1066dec8561", BaseURL)
+
+			if tt.name == "Happy case: get list of facilities" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := FacilityOutputs{
+						Results: []*FacilityOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Name:        "Oxygen",
+								Description: "158211",
+							},
+							{
+								ID:          gofakeit.UUID(),
+								Name:        "Oxygen",
+								Description: "158211",
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: unable to get services" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+
+			MockAuthenticate()
+
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.GetMultipleFacilities(tt.args.ctx, tt.args.facilityIDs)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetMultipleFacilities() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
