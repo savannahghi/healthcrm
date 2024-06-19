@@ -39,7 +39,7 @@ const (
 	// GenderTypeASKU stands for Asked but Unknown
 	GenderTypeASKU GenderType = "ASKU"
 	// GenderTypeUNK stands for Unknown
-	GenderTypeUNK GenderType = "Unknown"
+	GenderTypeUNK GenderType = "UNK"
 )
 
 // IsValid returns true if a contact type is valid
