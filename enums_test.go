@@ -251,3 +251,126 @@ func TestContactType_MarshalGQL(t *testing.T) {
 		})
 	}
 }
+
+func TestGenderType_String(t *testing.T) {
+	tests := []struct {
+		name string
+		e    GenderType
+		want string
+	}{
+		{
+			name: "happy case: enum to string",
+			e:    GenderTypeMale,
+			want: "MALE",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.String(); got != tt.want {
+				t.Errorf("GenderType.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenderType_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		e    GenderType
+		want bool
+	}{
+		{
+			name: "valid type",
+			e:    GenderTypeMale,
+			want: true,
+		},
+		{
+			name: "invalid type",
+			e:    GenderType("invalid"),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.IsValid(); got != tt.want {
+				t.Errorf("GenderType.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenderType_UnmarshalGQL(t *testing.T) {
+	value := GenderTypeFemale
+	invalid := GenderType("invalid")
+
+	type args struct {
+		v interface{}
+	}
+
+	tests := []struct {
+		name    string
+		e       *GenderType
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "valid type",
+			e:    &value,
+			args: args{
+				v: "FEMALE",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid type",
+			e:    &invalid,
+			args: args{
+				v: "this is not a valid type",
+			},
+			wantErr: true,
+		},
+		{
+			name: "non string type",
+			e:    &invalid,
+			args: args{
+				v: 1,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.e.UnmarshalGQL(tt.args.v); (err != nil) != tt.wantErr {
+				t.Errorf("GenderType.UnmarshalGQL() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGenderType_MarshalGQL(t *testing.T) {
+	w := &bytes.Buffer{}
+
+	tests := []struct {
+		name  string
+		e     GenderType
+		b     *bytes.Buffer
+		wantW string
+		panic bool
+	}{
+		{
+			name:  "valid type enums",
+			e:     GenderTypeOther,
+			b:     w,
+			wantW: strconv.Quote("OTHER"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.e.MarshalGQL(tt.b)
+
+			if gotW := w.String(); gotW != tt.wantW {
+				t.Errorf("GenderType.MarshalGQL() = %v, want %v", gotW, tt.wantW)
+			}
+		})
+	}
+}
