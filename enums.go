@@ -10,6 +10,8 @@ type IdentifierType string
 
 type ContactType string
 
+type GenderType string
+
 const (
 	// Identifier types
 	IdentifierTypeNationalID    IdentifierType = "NATIONAL_ID"
@@ -28,6 +30,16 @@ const (
 const (
 	ContactTypePhoneNumber ContactType = "PHONE_NUMBER"
 	ContactTypeEmail       ContactType = "EMAIL"
+)
+
+const (
+	GenderTypeMale   GenderType = "MALE"
+	GenderTypeFemale GenderType = "FEMALE"
+	GenderTypeOther  GenderType = "OTHER"
+	// GenderTypeASKU stands for Asked but Unknown
+	GenderTypeASKU GenderType = "ASKU"
+	// GenderTypeUNK stands for Unknown
+	GenderTypeUNK GenderType = "Unknown"
 )
 
 // IsValid returns true if a contact type is valid
@@ -108,5 +120,40 @@ func (f *IdentifierType) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL writes the identifier type to the supplied writer
 func (f IdentifierType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(f.String()))
+}
+
+// IsValid returns true if a Gender type is valid
+func (f GenderType) IsValid() bool {
+	switch f {
+	case GenderTypeMale, GenderTypeFemale, GenderTypeOther, GenderTypeASKU, GenderTypeUNK:
+		return true
+	default:
+		return false
+	}
+}
+
+// String converts the Gender type enum to a string
+func (f GenderType) String() string {
+	return string(f)
+}
+
+// UnmarshalGQL converts the supplied value to a Gender type.
+func (f *GenderType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*f = GenderType(str)
+	if !f.IsValid() {
+		return fmt.Errorf("%s is not a valid ContactType type", str)
+	}
+
+	return nil
+}
+
+// MarshalGQL writes the gender type to the supplied writer
+func (f GenderType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(f.String()))
 }
