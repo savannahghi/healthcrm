@@ -373,8 +373,8 @@ github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQD
 github.com/ryanuber/columnize v2.1.0+incompatible/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/savannahghi/authutils v0.0.10 h1:FgrTsqZ+v9OMYVtB32zmfAnnR1iL9FIHNPRTgXLVJcc=
 github.com/savannahghi/authutils v0.0.10/go.mod h1:msRa8zWvgf9r3/eZB+cV6Fol76C0pZ+IUt5YGb53dwc=
-github.com/savannahghi/enumutils v0.0.3 h1:0IPGS/Q27B8mZw+0YOb1r7Au1MgJQldfuwYid3byUx0=
-github.com/savannahghi/enumutils v0.0.3/go.mod h1:DDdjQBO1qyf5BxLzhTs1uN91drCIHH2Lvr8aLdJwu/o=
+github.com/savannahghi/enumutils v0.0.6 h1:jRXk8my+mV+0CEwJASK7PCWIRsHl+OTCroWE/W6UKUk=
+github.com/savannahghi/enumutils v0.0.6/go.mod h1:TVTHCb8JWHIUPiGWl233Ux/+8wy4prEzEmKzBQueh6Q=
 github.com/savannahghi/errorcodeutil v0.0.5 h1:LrOLsEW1ZgA8PhJIXFCVOofm0hJFVOdd0+jvq3PGnRE=
 github.com/savannahghi/errorcodeutil v0.0.5/go.mod h1:l2OVW1VE45rmEOLKQHnGnJ0gsSo60VCyErfm2Vfl4v0=
 github.com/savannahghi/firebasetools v0.0.19 h1:NIsC2NRdk8DhgQ4J7dGd5jeV9fiHoYiBYw7DTVjwskQ=
