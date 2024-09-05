@@ -82,7 +82,6 @@ func (cl *client) MakeRequest(ctx context.Context, method, path string, queryPar
 
 	default:
 		return nil, fmt.Errorf("s.MakeRequest() unsupported http method: %s", method)
-
 	}
 
 	request.Header.Set("Accept", "application/json")
@@ -90,7 +89,6 @@ func (cl *client) MakeRequest(ctx context.Context, method, path string, queryPar
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", oauthResponse.AccessToken))
 
 	if queryParams != nil {
-
 		request.URL.RawQuery = queryParams.Encode()
 	}
 

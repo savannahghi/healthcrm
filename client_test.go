@@ -126,7 +126,10 @@ func TestMakeRequest(t *testing.T) {
 			response, err := mockClient.MakeRequest(ctx, tt.method, tt.path, tt.queryParams, tt.body)
 			if err != nil {
 				t.Errorf("Error making request: %v", err)
+				return
 			}
+
+			defer response.Body.Close()
 
 			if response.StatusCode != tt.want {
 				t.Errorf("Expected status code %d, got %d", tt.want, response.StatusCode)
