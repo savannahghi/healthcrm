@@ -298,7 +298,6 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			if tt.name == "Happy case: fetch facilities" {
 				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
-
 					service1 := &FacilityOutput{
 						ID:           gofakeit.UUID(),
 						Name:         gofakeit.BeerName(),
