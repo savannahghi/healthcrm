@@ -1,11 +1,12 @@
 module github.com/savannahghi/healthcrm
 
-go 1.21
+go 1.23
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/savannahghi/authutils v0.0.10
+	github.com/savannahghi/enumutils v0.0.6
 	github.com/savannahghi/serverutils v0.0.7
 )
 
@@ -50,7 +51,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/savannahghi/enumutils v0.0.3 // indirect
 	github.com/savannahghi/errorcodeutil v0.0.5 // indirect
 	github.com/savannahghi/firebasetools v0.0.19 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
