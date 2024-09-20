@@ -89,7 +89,7 @@ type ProfileInput struct {
 	LastName      string                    `json:"last_name"`
 	OtherName     string                    `json:"other_name"`
 	DateOfBirth   string                    `json:"date_of_birth"`
-	Gender        string                    `json:"gender"`
+	Gender        GenderType                `json:"gender"`
 	EnrolmentDate string                    `json:"enrolment_date"`
 	SladeCode     string                    `json:"slade_code"`
 	ServiceCode   string                    `json:"service_code"`

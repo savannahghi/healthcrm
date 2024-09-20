@@ -9,6 +9,7 @@ import (
 	"github.com/brianvoe/gofakeit"
 	"github.com/jarcoal/httpmock"
 	"github.com/savannahghi/authutils"
+	"github.com/savannahghi/enumutils"
 	"github.com/savannahghi/serverutils"
 )
 
@@ -1291,7 +1292,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 						LastName:      gofakeit.LastName(),
 						OtherName:     gofakeit.BeerName(),
 						DateOfBirth:   gofakeit.Date().String(),
-						Gender:        gofakeit.Gender(),
+						Gender:        ConvertEnumutilsGenderToCRMGender(enumutils.GenderAgender),
 						EnrolmentDate: gofakeit.Date().String(),
 						SladeCode:     "50202",
 						ServiceCode:   "50",
