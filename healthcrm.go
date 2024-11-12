@@ -550,3 +550,36 @@ func (h *HealthCRMLib) GetPersonIdentifiers(ctx context.Context, healthID string
 
 	return identifiers.Results, nil
 }
+
+// GetPersonContacts fetches a persons Contacts using their HealthID
+func (h *HealthCRMLib) GetPersonContacts(ctx context.Context, healthID string) ([]*ProfileContactOutput, error) {
+	if healthID == "" {
+		return nil, errors.New("no health ID provided")
+	}
+
+	path := fmt.Sprintf("/v1/identities/persons/%s/contacts/", healthID)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var identifiers *ProfileContactOutputs
+	err = json.Unmarshal(respBytes, &identifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	return identifiers.Results, nil
+}
