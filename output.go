@@ -115,3 +115,18 @@ type FacilityServices struct {
 type FacilityOutputs struct {
 	Results []*FacilityOutput `json:"results"`
 }
+
+// ProfileIdentifierOutput is used to display profile(s) identifier(s)
+type ProfileIdentifierOutput struct {
+	IdentifierType  IdentifierType `json:"identifier_type"`
+	IdentifierValue string         `json:"identifier_value"`
+	Verified        bool           `json:"verified"`
+	ValidFrom       *time.Time     `json:"valid_from,omitempty"`
+	ValidTo         *time.Time     `json:"valid_to,omitempty"`
+	SladeCode       string         `json:"slade_code"`
+}
+
+// ProfileIdentifierOutputs is used to get a list of facility Services
+type ProfileIdentifierOutputs struct {
+	Results []*ProfileIdentifierOutput `json:"results"`
+}
