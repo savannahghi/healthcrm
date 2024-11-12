@@ -126,7 +126,22 @@ type ProfileIdentifierOutput struct {
 	SladeCode       string         `json:"slade_code"`
 }
 
-// ProfileIdentifierOutputs is used to get a list of facility Services
+// ProfileIdentifierOutputs is used to get a list of identifiers
 type ProfileIdentifierOutputs struct {
 	Results []*ProfileIdentifierOutput `json:"results"`
+}
+
+// ProfileContactOutput is used to display profile(s) contact(s)
+type ProfileContactOutput struct {
+	ContactType  ContactType `json:"contact_type"`
+	ContactValue string      `json:"contact_value"`
+	Verified     bool        `json:"verified"`
+	ValidFrom    *time.Time  `json:"valid_from,omitempty"`
+	ValidTo      *time.Time  `json:"valid_to,omitempty"`
+	SladeCode    string      `json:"slade_code"`
+}
+
+// ProfileContactOutputs is used to get a list of contacts
+type ProfileContactOutputs struct {
+	Results []*ProfileContactOutput `json:"results"`
 }
