@@ -21,6 +21,13 @@ func (m *MockAuthUtilsLib) Authenticate() (*authutils.OAUTHResponse, error) {
 	}, nil
 }
 
+// Authenticate mocks implementation of authutil's library
+func (m *MockAuthUtilsLib) RefreshToken(ctx context.Context, refreshToken string) (*authutils.OAUTHResponse, error) {
+	return &authutils.OAUTHResponse{
+		AccessToken: "mockAccessToken",
+	}, nil
+}
+
 func TestMakeRequest(t *testing.T) {
 	ctx := context.Background()
 	queryParam := url.Values{}

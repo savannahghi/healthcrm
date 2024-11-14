@@ -11,17 +11,27 @@ import (
 
 	"github.com/savannahghi/authutils"
 	"github.com/savannahghi/serverutils"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	accessTokenTimeout = 59 * time.Minute
 )
 
 // IAuthUtilsLib holds the method defined in authutils library
 type authUtilsLib interface {
 	Authenticate() (*authutils.OAUTHResponse, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*authutils.OAUTHResponse, error)
 }
 
 // client is the library's client used to make requests
 type client struct {
-	authClient authUtilsLib
-	httpClient *http.Client
+	authClient        authUtilsLib
+	httpClient        *http.Client
+	refreshToken      string
+	accessToken       string
+	accessTokenTicker *time.Ticker
+	authFailed        bool
 }
 
 // newClient is the constructor which initializes health crm's authentication mechanism
@@ -39,12 +49,79 @@ func newClient() (*client, error) {
 		return nil, err
 	}
 
-	return &client{
+	c := client{
 		authClient: slade360AuthClient,
 		httpClient: &http.Client{
 			Timeout: time.Second * 10,
 		},
-	}, nil
+		accessToken:  "",
+		refreshToken: "",
+		authFailed:   false,
+	}
+
+	err = c.login()
+	if err != nil {
+		return nil, err
+	}
+
+	// set up background routine to update tokens
+	go c.background()
+
+	return &c, nil
+}
+
+// executed as a go routine to update access and refresh token
+func (c *client) background() {
+	for t := range c.accessTokenTicker.C {
+		logrus.Println("HealthCRM Access Token updated at: ", t)
+
+		err := c.refreshAccessToken()
+		if err != nil {
+			c.authFailed = true
+		} else {
+			c.authFailed = false
+		}
+	}
+}
+
+// setAccessToken sets the access token and updates the ticker timer
+func (c *client) setRefreshAndAccessToken(token *authutils.OAUTHResponse) {
+	c.accessToken = token.AccessToken
+	c.refreshToken = token.RefreshToken
+
+	if c.accessTokenTicker != nil {
+		c.accessTokenTicker.Reset(accessTokenTimeout)
+	} else {
+		c.accessTokenTicker = time.NewTicker(accessTokenTimeout)
+	}
+}
+
+// login uses the provided credentials to login to the authserver backend
+// It obtains the necessary tokens required to make authenticated requests
+func (c *client) login() error {
+	token, err := c.authClient.Authenticate()
+	if err != nil {
+		return err
+	}
+
+	c.setRefreshAndAccessToken(token)
+
+	return nil
+}
+
+// refreshAccessToken makes a request to get
+// new access and refresh tokens
+func (c *client) refreshAccessToken() error {
+	ctx := context.Background()
+
+	token, err := c.authClient.RefreshToken(ctx, c.refreshToken)
+	if err != nil {
+		return err
+	}
+
+	c.setRefreshAndAccessToken(token)
+
+	return nil
 }
 
 // MakeRequest performs a HTTP request to the provided path and parameters
