@@ -8,6 +8,7 @@ require (
 	github.com/savannahghi/authutils v0.0.10
 	github.com/savannahghi/enumutils v0.0.6
 	github.com/savannahghi/serverutils v0.0.7
+	github.com/sirupsen/logrus v1.8.1
 )
 
 require (
@@ -53,7 +54,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/savannahghi/errorcodeutil v0.0.5 // indirect
 	github.com/savannahghi/firebasetools v0.0.19 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0 // indirect
