@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/google/uuid"
 	"github.com/jarcoal/httpmock"
 	"github.com/savannahghi/authutils"
 	"github.com/savannahghi/enumutils"
@@ -1667,12 +1668,28 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 							{
 								IdentifierType:  IdentifierTypePayerMemberNo,
 								IdentifierValue: "12345",
-								SladeCode:       "1234",
+								Profile: Profile{
+									Service: Service{
+										Name: "Slade advantage",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
 							},
 							{
 								IdentifierType:  IdentifierTypeNationalID,
 								IdentifierValue: "123456789",
-								SladeCode:       "1234",
+								Profile: Profile{
+									Service: Service{
+										Name: "EDI",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
 							},
 						},
 					}
@@ -1780,12 +1797,28 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 							{
 								ContactType:  ContactTypePhoneNumber,
 								ContactValue: "+254711234567",
-								SladeCode:    "1234",
+								Profile: Profile{
+									Service: Service{
+										Name: "Slade advantage",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
 							},
 							{
 								ContactType:  ContactTypeEmail,
 								ContactValue: "foo@bar.com",
-								SladeCode:    "1234",
+								Profile: Profile{
+									Service: Service{
+										Name: "EDI",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
 							},
 						},
 					}
