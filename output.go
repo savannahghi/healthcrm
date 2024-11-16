@@ -116,6 +116,21 @@ type FacilityOutputs struct {
 	Results []*FacilityOutput `json:"results"`
 }
 
+// Service is used get a service from HealthCRM. These
+// are services such as advantage, edi , consumer etc
+type Service struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
+// Profile models how a profile from a service is modelled.
+type Profile struct {
+	Service    Service `json:"service"`
+	Name       string  `json:"full_name"`
+	SladeCode  string  `json:"slade_code"`
+	ExternalID string  `json:"external_id"`
+}
+
 // ProfileIdentifierOutput is used to display profile(s) identifier(s)
 type ProfileIdentifierOutput struct {
 	IdentifierType  IdentifierType `json:"identifier_type"`
@@ -123,7 +138,7 @@ type ProfileIdentifierOutput struct {
 	Verified        bool           `json:"verified"`
 	ValidFrom       *time.Time     `json:"valid_from,omitempty"`
 	ValidTo         *time.Time     `json:"valid_to,omitempty"`
-	SladeCode       string         `json:"slade_code"`
+	Profile         Profile        `json:"profile"`
 }
 
 // ProfileIdentifierOutputs is used to get a list of identifiers
@@ -138,7 +153,7 @@ type ProfileContactOutput struct {
 	Verified     bool        `json:"verified"`
 	ValidFrom    *time.Time  `json:"valid_from,omitempty"`
 	ValidTo      *time.Time  `json:"valid_to,omitempty"`
-	SladeCode    string      `json:"slade_code"`
+	Profile      Profile     `json:"profile"`
 }
 
 // ProfileContactOutputs is used to get a list of contacts
