@@ -509,7 +509,7 @@ func (h *HealthCRMLib) GetMultipleFacilities(ctx context.Context, facilityIDs []
 
 // GetPersonIdentifiers fetches a persons identifiers using their HealthID, a
 // filter for identifier_type can be passed
-func (h *HealthCRMLib) GetPersonIdentifiers(ctx context.Context, healthID string, identifierType IdentifierType) ([]*ProfileIdentifierOutput, error) {
+func (h *HealthCRMLib) GetPersonIdentifiers(ctx context.Context, healthID string, identifierTypes []*IdentifierType) ([]*ProfileIdentifierOutput, error) {
 	if healthID == "" {
 		return nil, errors.New("no health ID provided")
 	}
@@ -517,13 +517,28 @@ func (h *HealthCRMLib) GetPersonIdentifiers(ctx context.Context, healthID string
 	path := fmt.Sprintf("/v1/identities/persons/%s/identifiers/", healthID)
 
 	var queryParams url.Values
-	if identifierType != "" {
-		if !identifierType.IsValid() {
-			return nil, fmt.Errorf("invalid identifier passed: %s", identifierType)
+
+	if identifierTypes != nil {
+		if !identifierTypes[0].IsValid() {
+			return nil, fmt.Errorf("invalid identifier type provided: %s", identifierTypes[0])
+		}
+
+		identifierString := identifierTypes[0].String()
+
+		for idx, identifier := range identifierTypes {
+			if idx == 0 {
+				continue
+			}
+
+			if !identifier.IsValid() {
+				return nil, fmt.Errorf("invalid identifier type provided: %s", identifier)
+			}
+
+			identifierString += fmt.Sprintf(",%s", identifier.String())
 		}
 
 		queryParams = url.Values{}
-		queryParams.Add("identifier_type", identifierType.String())
+		queryParams.Add("identifier_type", identifierString)
 	}
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)

@@ -1601,11 +1601,18 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
+	invalid := IdentifierType("invalid")
+
+	payer := IdentifierTypePayerMemberNo
+
+	nhif := IdentifierTypeNHIFNo
+
 	type args struct {
 		ctx            context.Context
 		healthID       string
-		identifierType IdentifierType
+		identifierType []*IdentifierType
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -1616,7 +1623,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			args: args{
 				ctx:            context.Background(),
 				healthID:       "5113010000018400",
-				identifierType: "",
+				identifierType: nil,
 			},
 			wantErr: false,
 		},
@@ -1625,25 +1632,42 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			args: args{
 				ctx:            context.Background(),
 				healthID:       "",
-				identifierType: "",
+				identifierType: nil,
 			},
 			wantErr: true,
 		},
 		{
 			name: "Sad case: invalid identifier",
 			args: args{
-				ctx:            context.Background(),
-				healthID:       "5113010000018400",
-				identifierType: "foo",
+				ctx:      context.Background(),
+				healthID: "5113010000018400",
+				identifierType: []*IdentifierType{
+					&invalid,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: invalid identifier",
+			args: args{
+				ctx:      context.Background(),
+				healthID: "5113010000018400",
+				identifierType: []*IdentifierType{
+					&payer,
+					&invalid,
+				},
 			},
 			wantErr: true,
 		},
 		{
 			name: "Sad case: unable to make request",
 			args: args{
-				ctx:            context.Background(),
-				healthID:       "5113010000018400",
-				identifierType: IdentifierTypePatientNo,
+				ctx:      context.Background(),
+				healthID: "5113010000018400",
+				identifierType: []*IdentifierType{
+					&payer,
+					&nhif,
+				},
 			},
 			wantErr: true,
 		},
@@ -1652,7 +1676,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			args: args{
 				ctx:            context.Background(),
 				healthID:       "5113010000018400",
-				identifierType: "",
+				identifierType: nil,
 			},
 			wantErr: true,
 		},
