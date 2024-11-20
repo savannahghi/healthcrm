@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
+	github.com/google/uuid v1.3.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/savannahghi/authutils v0.0.10
 	github.com/savannahghi/enumutils v0.0.6
@@ -41,7 +42,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/pprof v0.0.0-20220113144219-d25a53d42d00 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
