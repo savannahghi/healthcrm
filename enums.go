@@ -14,17 +14,21 @@ type GenderType string
 
 const (
 	// Identifier types
-	IdentifierTypeNationalID    IdentifierType = "NATIONAL_ID"
-	IdentifierTypePassportNo    IdentifierType = "PASSPORT_NO"
-	IdentifierTypeMilitaryID    IdentifierType = "MILITARY_ID"
-	IdentifierTypeAlienID       IdentifierType = "ALIEN_ID"
-	IdentifierTypeNHIFNo        IdentifierType = "NHIF_NO"
-	IdentifierTypePatientNo     IdentifierType = "PATIENT_NO"
-	IdentifierTypePayerMemberNo IdentifierType = "PAYER_MEMBER_NO"
-	IdentifierTypeSmartMemberNo IdentifierType = "SMART_MEMBER_NO"
-	IdentifierTypeFHIRPatientID IdentifierType = "FHIR_PATIENT_ID"
-	IdentifierTypeERPCustomerID IdentifierType = "ERP_CUSTOMER_ID"
-	IdentifierTypeCCCNumber     IdentifierType = "CCC_NUMBER"
+	IdentifierTypeNationalID         IdentifierType = "NATIONAL_ID"
+	IdentifierTypePassportNo         IdentifierType = "PASSPORT_NO"
+	IdentifierTypeMilitaryID         IdentifierType = "MILITARY_ID"
+	IdentifierTypeAlienID            IdentifierType = "ALIEN_ID"
+	IdentifierTypeNHIFNo             IdentifierType = "NHIF_NO"
+	IdentifierTypePatientNo          IdentifierType = "PATIENT_NO"
+	IdentifierTypePayerMemberNo      IdentifierType = "PAYER_MEMBER_NO"
+	IdentifierTypeSmartMemberNo      IdentifierType = "SMART_MEMBER_NO"
+	IdentifierTypeFHIRPatientID      IdentifierType = "FHIR_PATIENT_ID"
+	IdentifierTypeERPCustomerID      IdentifierType = "ERP_CUSTOMER_ID"
+	IdentifierTypeCCCNumber          IdentifierType = "CCC_NUMBER"
+	IdentifierTypeRefugeeID          IdentifierType = "REFUGEE_ID"
+	IdentifierTypeBirthCertificateNo IdentifierType = "BIRTH_CERTIFICATE_NO"
+	IdentifierTypeMandateNo          IdentifierType = "MANDATE_NO"
+	IdentifierTypeClientRegistryNo   IdentifierType = "CLIENT_REGISTRY_NO"
 )
 
 const (
@@ -91,7 +95,11 @@ func (f IdentifierType) IsValid() bool {
 		IdentifierTypeSmartMemberNo,
 		IdentifierTypeFHIRPatientID,
 		IdentifierTypeERPCustomerID,
-		IdentifierTypeCCCNumber:
+		IdentifierTypeCCCNumber,
+		IdentifierTypeRefugeeID,
+		IdentifierTypeBirthCertificateNo,
+		IdentifierTypeMandateNo,
+		IdentifierTypeClientRegistryNo:
 		return true
 	default:
 		return false
