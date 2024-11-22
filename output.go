@@ -1,6 +1,10 @@
 package healthcrm
 
-import "time"
+import (
+	"time"
+
+	"github.com/savannahghi/scalarutils"
+)
 
 // FacilityPage is the hospitals model used to show facility details
 type FacilityPage struct {
@@ -133,12 +137,12 @@ type Profile struct {
 
 // ProfileIdentifierOutput is used to display profile(s) identifier(s)
 type ProfileIdentifierOutput struct {
-	IdentifierType  IdentifierType `json:"identifier_type"`
-	IdentifierValue string         `json:"identifier_value"`
-	Verified        bool           `json:"verified"`
-	ValidFrom       *time.Time     `json:"valid_from,omitempty"`
-	ValidTo         *time.Time     `json:"valid_to,omitempty"`
-	Profile         Profile        `json:"profile"`
+	IdentifierType  IdentifierType    `json:"identifier_type"`
+	IdentifierValue string            `json:"identifier_value"`
+	Verified        bool              `json:"verified"`
+	ValidFrom       *scalarutils.Date `json:"valid_from,omitempty"`
+	ValidTo         *scalarutils.Date `json:"valid_to,omitempty"`
+	Profile         Profile           `json:"profile"`
 }
 
 // ProfileIdentifierOutputs is used to get a list of identifiers
@@ -148,12 +152,12 @@ type ProfileIdentifierOutputs struct {
 
 // ProfileContactOutput is used to display profile(s) contact(s)
 type ProfileContactOutput struct {
-	ContactType  ContactType `json:"contact_type"`
-	ContactValue string      `json:"contact_value"`
-	Verified     bool        `json:"verified"`
-	ValidFrom    *time.Time  `json:"valid_from,omitempty"`
-	ValidTo      *time.Time  `json:"valid_to,omitempty"`
-	Profile      Profile     `json:"profile"`
+	ContactType  ContactType       `json:"contact_type"`
+	ContactValue string            `json:"contact_value"`
+	Verified     bool              `json:"verified"`
+	ValidFrom    *scalarutils.Date `json:"valid_from,omitempty"`
+	ValidTo      *scalarutils.Date `json:"valid_to,omitempty"`
+	Profile      Profile           `json:"profile"`
 }
 
 // ProfileContactOutputs is used to get a list of contacts

@@ -11,6 +11,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/savannahghi/authutils"
 	"github.com/savannahghi/enumutils"
+	"github.com/savannahghi/scalarutils"
 	"github.com/savannahghi/serverutils"
 )
 
@@ -1622,7 +1623,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			name: "Happy case: get list of identifiers",
 			args: args{
 				ctx:            context.Background(),
-				healthID:       "5113010000018400",
+				healthID:       "0000010000000041",
 				identifierType: nil,
 			},
 			wantErr: false,
@@ -1640,7 +1641,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			name: "Sad case: invalid identifier",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 				identifierType: []*IdentifierType{
 					&invalid,
 				},
@@ -1651,7 +1652,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			name: "Sad case: invalid identifier",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 				identifierType: []*IdentifierType{
 					&payer,
 					&invalid,
@@ -1663,7 +1664,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			name: "Sad case: unable to make request",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 				identifierType: []*IdentifierType{
 					&payer,
 					&nhif,
@@ -1675,7 +1676,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			name: "Sad case: invalid status code",
 			args: args{
 				ctx:            context.Background(),
-				healthID:       "5113010000018400",
+				healthID:       "0000010000000041",
 				identifierType: nil,
 			},
 			wantErr: true,
@@ -1683,7 +1684,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/identities/persons/5113010000018400/identifiers/", BaseURL)
+			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/identifiers/", BaseURL)
 
 			if tt.name == "Happy case: get list of identifiers" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -1701,6 +1702,16 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 									ExternalID: uuid.New().String(),
 									SladeCode:  "1234",
 								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
 							},
 							{
 								IdentifierType:  IdentifierTypeNationalID,
@@ -1713,6 +1724,16 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 									Name:       "John Doe",
 									ExternalID: uuid.New().String(),
 									SladeCode:  "1234",
+								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
 								},
 							},
 						},
@@ -1773,7 +1794,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			name: "Happy case: get list of contacts",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 			},
 			wantErr: false,
 		},
@@ -1789,7 +1810,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			name: "Sad case: invalid identifier",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 			},
 			wantErr: true,
 		},
@@ -1797,7 +1818,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			name: "Sad case: unable to make request",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 			},
 			wantErr: true,
 		},
@@ -1805,14 +1826,14 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			name: "Sad case: invalid status code",
 			args: args{
 				ctx:      context.Background(),
-				healthID: "5113010000018400",
+				healthID: "0000010000000041",
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/identities/persons/5113010000018400/contacts/", BaseURL)
+			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/contacts/", BaseURL)
 
 			if tt.name == "Happy case: get list of contacts" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -1830,6 +1851,16 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 									ExternalID: uuid.New().String(),
 									SladeCode:  "1234",
 								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
 							},
 							{
 								ContactType:  ContactTypeEmail,
@@ -1842,6 +1873,16 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 									Name:       "John Doe",
 									ExternalID: uuid.New().String(),
 									SladeCode:  "1234",
+								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
 								},
 							},
 						},
