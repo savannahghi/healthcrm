@@ -8,6 +8,7 @@ require (
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/savannahghi/authutils v0.0.10
 	github.com/savannahghi/enumutils v0.0.6
+	github.com/savannahghi/scalarutils v0.0.4
 	github.com/savannahghi/serverutils v0.0.7
 	github.com/sirupsen/logrus v1.8.1
 )
@@ -28,6 +29,7 @@ require (
 	firebase.google.com/go v3.13.0+incompatible // indirect
 	github.com/99designs/gqlgen v0.13.0 // indirect
 	github.com/agnivade/levenshtein v1.0.3 // indirect
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go v1.37.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -54,6 +56,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/savannahghi/errorcodeutil v0.0.5 // indirect
 	github.com/savannahghi/firebasetools v0.0.19 // indirect
+	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0 // indirect
