@@ -2,7 +2,8 @@ package healthcrm
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/savannahghi/scalarutils"
 )
 
 // Facility is the hospitals data class
@@ -87,10 +88,10 @@ type ProfileInput struct {
 	ProfileID     string                    `json:"profile_id"`
 	FirstName     string                    `json:"first_name"`
 	LastName      string                    `json:"last_name"`
-	OtherName     string                    `json:"other_name"`
-	DateOfBirth   string                    `json:"date_of_birth"`
+	OtherName     string                    `json:"other_name,omitempty"`
+	DateOfBirth   string                    `json:"date_of_birth,omitempty"`
 	Gender        GenderType                `json:"gender"`
-	EnrolmentDate string                    `json:"enrolment_date"`
+	EnrolmentDate string                    `json:"enrolment_date,omitempty"`
 	SladeCode     string                    `json:"slade_code"`
 	ServiceCode   string                    `json:"service_code"`
 	Contacts      []*ProfileContactInput    `json:"contacts,omitempty"`
@@ -99,18 +100,18 @@ type ProfileInput struct {
 
 // ProfileIdentifierInput is used to create profile(s) identifier(s)
 type ProfileIdentifierInput struct {
-	IdentifierType  IdentifierType `json:"identifier_type"`
-	IdentifierValue string         `json:"identifier_value"`
-	Verified        bool           `json:"verified"`
-	ValidFrom       *time.Time     `json:"valid_from,omitempty"`
-	ValidTo         *time.Time     `json:"valid_to,omitempty"`
+	IdentifierType  IdentifierType    `json:"identifier_type"`
+	IdentifierValue string            `json:"identifier_value"`
+	Verified        bool              `json:"verified"`
+	ValidFrom       *scalarutils.Date `json:"valid_from,omitempty"`
+	ValidTo         *scalarutils.Date `json:"valid_to,omitempty"`
 }
 
 // ProfileContanctInput is used to create profile(s) contact(s)
 type ProfileContactInput struct {
-	ContactType  ContactType `json:"contact_type"`
-	ContactValue string      `json:"contact_value"`
-	Verified     bool        `json:"verified"`
-	ValidFrom    *time.Time  `json:"valid_from,omitempty"`
-	ValidTo      *time.Time  `json:"valid_to,omitempty"`
+	ContactType  ContactType       `json:"contact_type"`
+	ContactValue string            `json:"contact_value"`
+	Verified     bool              `json:"verified"`
+	ValidFrom    *scalarutils.Date `json:"valid_from,omitempty"`
+	ValidTo      *scalarutils.Date `json:"valid_to,omitempty"`
 }
