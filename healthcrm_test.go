@@ -1231,7 +1231,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 					Gender:        "MALE",
 					EnrolmentDate: "2023-09-01",
 					SladeCode:     "6000",
-					ServiceCode:   "50",
+					ServiceCode:   "01",
 					Contacts: []*ProfileContactInput{
 						{
 							ContactType:  "PHONE_NUMBER",
@@ -1242,6 +1242,16 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 						{
 							IdentifierType:  "SLADE_CODE",
 							IdentifierValue: "3243",
+							ValidFrom: &scalarutils.Date{
+								Year:  2024,
+								Month: 1,
+								Day:   1,
+							},
+							ValidTo: &scalarutils.Date{
+								Year:  2024,
+								Month: 1,
+								Day:   1,
+							},
 						},
 					},
 				},
