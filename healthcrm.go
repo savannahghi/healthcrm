@@ -409,6 +409,35 @@ func (h *HealthCRMLib) CreateProfile(ctx context.Context, profile *ProfileInput)
 	return profileResponse, nil
 }
 
+// MatchProfile is used to create profile in health CRM service
+func (h *HealthCRMLib) MatchProfile(ctx context.Context, profile *ProfileInput) (*ProfileOutput, error) {
+	path := "/v1/identities/profiles/match_profile/"
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var profileResponse *ProfileOutput
+
+	err = json.Unmarshal(respBytes, &profileResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return profileResponse, nil
+}
+
 // GetMultipleServices is used to fetch multiple services
 //
 // Parameters:
@@ -516,29 +545,14 @@ func (h *HealthCRMLib) GetPersonIdentifiers(ctx context.Context, healthID string
 
 	path := fmt.Sprintf("/v1/identities/persons/%s/identifiers/", healthID)
 
-	var queryParams url.Values
+	queryParams := url.Values{}
 
-	if identifierTypes != nil {
-		if !identifierTypes[0].IsValid() {
-			return nil, fmt.Errorf("invalid identifier type provided: %s", identifierTypes[0])
+	for _, identifier := range identifierTypes {
+		if !identifier.IsValid() {
+			return nil, fmt.Errorf("invalid identifier type provided: %s", identifier)
 		}
 
-		identifierString := identifierTypes[0].String()
-
-		for idx, identifier := range identifierTypes {
-			if idx == 0 {
-				continue
-			}
-
-			if !identifier.IsValid() {
-				return nil, fmt.Errorf("invalid identifier type provided: %s", identifier)
-			}
-
-			identifierString += fmt.Sprintf(",%s", identifier.String())
-		}
-
-		queryParams = url.Values{}
-		queryParams.Add("identifier_type", identifierString)
+		queryParams.Add("identifier_type", identifier.String())
 	}
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)

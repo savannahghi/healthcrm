@@ -104,10 +104,11 @@ type ServiceIdentifier struct {
 
 // ProfileOutput is used to display profile(s)
 type ProfileOutput struct {
-	ID        string `json:"id"`
-	ProfileID string `json:"profile_id"`
-	HealthID  string `json:"health_id,omitempty"`
-	SladeCode string `json:"slade_code"`
+	ID             string      `json:"id"`
+	ProfileID      string      `json:"profile_id"`
+	HealthID       string      `json:"health_id,omitempty"`
+	Classification MatchResult `json:"classification,omitempty"`
+	SladeCode      string      `json:"slade_code"`
 }
 
 // FacilityServices is used to get a list of facility Services

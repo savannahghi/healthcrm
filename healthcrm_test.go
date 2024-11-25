@@ -1639,6 +1639,18 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Happy case: get list of filtered identifiers",
+			args: args{
+				ctx:      context.Background(),
+				healthID: "0000010000000041",
+				identifierType: []*IdentifierType{
+					&payer,
+					&nhif,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Sad case: no healthID",
 			args: args{
 				ctx:            context.Background(),
@@ -1697,6 +1709,61 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/identifiers/", BaseURL)
 
 			if tt.name == "Happy case: get list of identifiers" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := ProfileIdentifierOutputs{
+						Results: []*ProfileIdentifierOutput{
+							{
+								IdentifierType:  IdentifierTypePayerMemberNo,
+								IdentifierValue: "12345",
+								Profile: Profile{
+									Service: Service{
+										Name: "Slade advantage",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+							},
+							{
+								IdentifierType:  IdentifierTypeNationalID,
+								IdentifierValue: "123456789",
+								Profile: Profile{
+									Service: Service{
+										Name: "EDI",
+										Code: "XX",
+									},
+									Name:       "John Doe",
+									ExternalID: uuid.New().String(),
+									SladeCode:  "1234",
+								},
+								ValidFrom: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+								ValidTo: &scalarutils.Date{
+									Month: 1,
+									Day:   1,
+									Year:  2020,
+								},
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Happy case: get list of filtered identifiers" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := ProfileIdentifierOutputs{
 						Results: []*ProfileIdentifierOutput{
@@ -1933,6 +2000,143 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			_, err = h.GetPersonContacts(tt.args.ctx, tt.args.healthID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetMultipleFacilities() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestHealthCRMLib_MatchProfile(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		profile *ProfileInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy Case: Match Profile",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					ProfileID:     gofakeit.UUID(),
+					HealthID:      gofakeit.UUID(),
+					FirstName:     gofakeit.FirstName(),
+					LastName:      gofakeit.LastName(),
+					OtherName:     gofakeit.FirstName(),
+					DateOfBirth:   gofakeit.Date().String(),
+					Gender:        "MALE",
+					EnrolmentDate: "2023-09-01",
+					SladeCode:     "6000",
+					ServiceCode:   "01",
+					Contacts: []*ProfileContactInput{
+						{
+							ContactType:  "PHONE_NUMBER",
+							ContactValue: gofakeit.PhoneFormatted(),
+						},
+					},
+					Identifiers: []*ProfileIdentifierInput{
+						{
+							IdentifierType:  "SLADE_CODE",
+							IdentifierValue: "3243",
+							ValidFrom: &scalarutils.Date{
+								Year:  2024,
+								Month: 1,
+								Day:   1,
+							},
+							ValidTo: &scalarutils.Date{
+								Year:  2024,
+								Month: 1,
+								Day:   1,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad Case: Unable To Match Profile",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					FirstName: gofakeit.FirstName(),
+					LastName:  gofakeit.LastName(),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad Case: Unable To Make Request",
+			args: args{
+				ctx: context.Background(),
+				profile: &ProfileInput{
+					FirstName: gofakeit.FirstName(),
+					LastName:  gofakeit.LastName(),
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy Case: Match Profile" {
+				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &ProfileOutput{
+						ID:             gofakeit.UUID(),
+						ProfileID:      gofakeit.UUID(),
+						HealthID:       "50932",
+						SladeCode:      "50202",
+						Classification: MatchResultMatch,
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Sad Case: Unable To Match Profile" {
+				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", BaseURL)
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &ProfileInput{
+						ProfileID:     gofakeit.UUID(),
+						FirstName:     gofakeit.FirstName(),
+						LastName:      gofakeit.LastName(),
+						OtherName:     gofakeit.BeerName(),
+						DateOfBirth:   gofakeit.Date().String(),
+						Gender:        ConvertEnumutilsGenderToCRMGender(enumutils.GenderAgender),
+						EnrolmentDate: gofakeit.Date().String(),
+						SladeCode:     "50202",
+						ServiceCode:   "50",
+						Contacts:      []*ProfileContactInput{},
+						Identifiers:   []*ProfileIdentifierInput{},
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+			if tt.name == "Sad Case: Unable To Make Request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			_, err = h.MatchProfile(tt.args.ctx, tt.args.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.MatchProfile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})

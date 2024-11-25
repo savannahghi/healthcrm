@@ -12,6 +12,8 @@ type ContactType string
 
 type GenderType string
 
+type MatchResult string
+
 const (
 	// Identifier types
 	IdentifierTypeNationalID         IdentifierType = "NATIONAL_ID"
@@ -44,6 +46,12 @@ const (
 	GenderTypeASKU GenderType = "ASKU"
 	// GenderTypeUNK stands for Unknown
 	GenderTypeUNK GenderType = "UNK"
+)
+
+const (
+	MatchResultMatch         MatchResult = "MATCH"
+	MatchResultPossibleMatch MatchResult = "POSSIBLE_MATCH"
+	MatchResultNoMatch       MatchResult = "NO_MATCH"
 )
 
 // IsValid returns true if a contact type is valid
@@ -164,4 +172,19 @@ func (f *GenderType) UnmarshalGQL(v interface{}) error {
 // MarshalGQL writes the gender type to the supplied writer
 func (f GenderType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(f.String()))
+}
+
+// IsValid returns true if a match result is valid
+func (m MatchResult) IsValid() bool {
+	switch m {
+	case MatchResultMatch, MatchResultPossibleMatch, MatchResultNoMatch:
+		return true
+	default:
+		return false
+	}
+}
+
+// String converts the match result enum to a string
+func (m MatchResult) String() string {
+	return string(m)
 }
