@@ -374,3 +374,50 @@ func TestGenderType_MarshalGQL(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchResult_String(t *testing.T) {
+	tests := []struct {
+		name string
+		e    MatchResult
+		want string
+	}{
+		{
+			name: "happy case: enum to string",
+			e:    MatchResultMatch,
+			want: "MATCH",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.String(); got != tt.want {
+				t.Errorf("MatchResult.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMatchResult_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		e    MatchResult
+		want bool
+	}{
+		{
+			name: "valid type",
+			e:    MatchResultPossibleMatch,
+			want: true,
+		},
+		{
+			name: "invalid type",
+			e:    MatchResult("invalid"),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.IsValid(); got != tt.want {
+				t.Errorf("MatchResult.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
