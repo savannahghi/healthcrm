@@ -612,3 +612,32 @@ func (h *HealthCRMLib) GetPersonContacts(ctx context.Context, healthID string) (
 
 	return identifiers.Results, nil
 }
+
+func (h *HealthCRMLib) VerifyIdentifierDocument(ctx context.Context, input IDVerificationInput) (*IDVerificationResult, error) {
+	path := "/v1/identities/identifiers/verify/"
+
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, input)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var result IDVerificationResult
+
+	err = json.Unmarshal(respBytes, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}

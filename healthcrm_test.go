@@ -2142,3 +2142,100 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		input IDVerificationInput
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "happy case: verify id document",
+			args: args{
+				ctx: context.Background(),
+				input: IDVerificationInput{
+					IDUrl: gofakeit.URL(),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "sad case: unable to verify id document",
+			args: args{
+				ctx: context.Background(),
+				input: IDVerificationInput{
+					IDUrl: gofakeit.URL(),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "sad case: invalid response",
+			args: args{
+				ctx: context.Background(),
+				input: IDVerificationInput{
+					IDUrl: gofakeit.URL(),
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+
+			if tt.name == "happy case: verify id document" {
+				path := "/v1/identities/identifiers/verify/"
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &IDVerificationResult{
+						ConfidenceScore: 67.78,
+						UserDetails: UserDetails{
+							IDNumber:    gofakeit.SSN(),
+							FullNames:   gofakeit.Person().FirstName,
+							DateOfBirth: gofakeit.Date().String(),
+							Gender:      GenderTypeFemale,
+						},
+						RegistryDetails: RegistryDetails{
+							ID:    gofakeit.UUID(),
+							Phone: gofakeit.Phone(),
+						},
+					}
+
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "sad case: unable to verify id document" {
+				path := "/v1/identities/identifiers/verify/"
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
+				})
+			}
+
+			if tt.name == "sad case: invalid response" {
+				path := "/v1/identities/identifiers/verify/"
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusOK, "invalid")
+				})
+			}
+
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.VerifyIdentifierDocument(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.VerifyIdentifierDocument() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
