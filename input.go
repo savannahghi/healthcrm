@@ -116,3 +116,8 @@ type ProfileContactInput struct {
 	ValidFrom    *scalarutils.Date `json:"valid_from,omitempty"`
 	ValidTo      *scalarutils.Date `json:"valid_to,omitempty"`
 }
+
+// IDVerificationInput is the input used to verify an identifier
+type IDVerificationInput struct {
+	IDUrl string `json:"id_url"`
+}

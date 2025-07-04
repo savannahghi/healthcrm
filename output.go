@@ -62,6 +62,7 @@ type FacilityOutput struct {
 	Identifiers   []IdentifiersOutput   `json:"identifiers,omitempty"`
 	BusinessHours []BusinessHoursOutput `json:"businesshours,omitempty"`
 	Services      []FacilityService     `json:"services,omitempty"`
+	IsAIResult    bool                  `json:"is_ai_result,omitempty"`
 }
 
 // BusinessHoursOutput models data that show facility's operational hours
@@ -164,4 +165,23 @@ type ProfileContactOutput struct {
 // ProfileContactOutputs is used to get a list of contacts
 type ProfileContactOutputs struct {
 	Results []*ProfileContactOutput `json:"results"`
+}
+
+type UserDetails struct {
+	IDNumber    string     `json:"id_number"`
+	FullNames   string     `json:"full_names"`
+	DateOfBirth string     `json:"date_of_birth"`
+	Gender      GenderType `json:"gender"`
+}
+
+type RegistryDetails struct {
+	ID    string `json:"id"`
+	Phone string `json:"phone"`
+}
+
+// IDVerificationResult is the result of a verification request
+type IDVerificationResult struct {
+	ConfidenceScore float64         `json:"confidence_score"`
+	UserDetails     UserDetails     `json:"patient_details"`
+	RegistryDetails RegistryDetails `json:"client_registry_details"`
 }
