@@ -16,21 +16,27 @@ type MatchResult string
 
 const (
 	// Identifier types
-	IdentifierTypeNationalID         IdentifierType = "NATIONAL_ID"
-	IdentifierTypePassportNo         IdentifierType = "PASSPORT_NO"
-	IdentifierTypeMilitaryID         IdentifierType = "MILITARY_ID"
-	IdentifierTypeAlienID            IdentifierType = "ALIEN_ID"
-	IdentifierTypeNHIFNo             IdentifierType = "NHIF_NO"
-	IdentifierTypePatientNo          IdentifierType = "PATIENT_NO"
-	IdentifierTypePayerMemberNo      IdentifierType = "PAYER_MEMBER_NO"
-	IdentifierTypeSmartMemberNo      IdentifierType = "SMART_MEMBER_NO"
-	IdentifierTypeFHIRPatientID      IdentifierType = "FHIR_PATIENT_ID"
-	IdentifierTypeERPCustomerID      IdentifierType = "ERP_CUSTOMER_ID"
-	IdentifierTypeCCCNumber          IdentifierType = "CCC_NUMBER"
-	IdentifierTypeRefugeeID          IdentifierType = "REFUGEE_ID"
-	IdentifierTypeBirthCertificateNo IdentifierType = "BIRTH_CERTIFICATE_NO"
-	IdentifierTypeMandateNo          IdentifierType = "MANDATE_NO"
-	IdentifierTypeClientRegistryNo   IdentifierType = "CLIENT_REGISTRY_NO"
+	IdentifierTypeNationalID           IdentifierType = "NATIONAL_ID"
+	IdentifierTypePassportNo           IdentifierType = "PASSPORT_NO"
+	IdentifierTypeMilitaryID           IdentifierType = "MILITARY_ID"
+	IdentifierTypeAlienID              IdentifierType = "ALIEN_ID"
+	IdentifierTypeNHIFNo               IdentifierType = "NHIF_NO"
+	IdentifierTypePatientNo            IdentifierType = "PATIENT_NO"
+	IdentifierTypePayerMemberNo        IdentifierType = "PAYER_MEMBER_NO"
+	IdentifierTypeSmartMemberNo        IdentifierType = "SMART_MEMBER_NO"
+	IdentifierTypeFHIRPatientID        IdentifierType = "FHIR_PATIENT_ID"
+	IdentifierTypeERPCustomerID        IdentifierType = "ERP_CUSTOMER_ID"
+	IdentifierTypeCCCNumber            IdentifierType = "CCC_NUMBER"
+	IdentifierTypeRefugeeID            IdentifierType = "REFUGEE_ID"
+	IdentifierTypeBirthCertificateNo   IdentifierType = "BIRTH_CERTIFICATE_NO"
+	IdentifierTypeMandateNo            IdentifierType = "MANDATE_NO"
+	IdentifierTypeClientRegistryNo     IdentifierType = "CLIENT_REGISTRY_NO"
+	IdentifierTypeDRChronoChartID      IdentifierType = "DR_CHRONO_CHART_ID"
+	IdentifierTypeBirthNotificationNo  IdentifierType = "BIRTH_NOTIFICATION_NO"
+	IdentifierTypeSHANumber            IdentifierType = "SHA_NUMBER"
+	IdentifierTypeHouseholdNumber      IdentifierType = "HOUSEHOLD_NUMBER"
+	IdentifierTypeTemporaryID          IdentifierType = "TEMPORARY_ID"
+	IdentifierTypeTemporaryDependentID IdentifierType = "TEMPORARY_DEPENDENT_ID"
 )
 
 const (
@@ -107,7 +113,13 @@ func (f IdentifierType) IsValid() bool {
 		IdentifierTypeRefugeeID,
 		IdentifierTypeBirthCertificateNo,
 		IdentifierTypeMandateNo,
-		IdentifierTypeClientRegistryNo:
+		IdentifierTypeClientRegistryNo,
+		IdentifierTypeDRChronoChartID,
+		IdentifierTypeBirthNotificationNo,
+		IdentifierTypeSHANumber,
+		IdentifierTypeHouseholdNumber,
+		IdentifierTypeTemporaryID,
+		IdentifierTypeTemporaryDependentID:
 		return true
 	default:
 		return false

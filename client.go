@@ -125,7 +125,7 @@ func (c *client) refreshAccessToken() error {
 }
 
 // MakeRequest performs a HTTP request to the provided path and parameters
-func (cl *client) MakeRequest(ctx context.Context, method, path string, queryParams url.Values, body interface{}) (*http.Response, error) {
+func (c *client) MakeRequest(ctx context.Context, method, path string, queryParams url.Values, body interface{}) (*http.Response, error) {
 	urlPath := fmt.Sprintf("%s%s", BaseURL, path)
 
 	var request *http.Request
@@ -158,11 +158,11 @@ func (cl *client) MakeRequest(ctx context.Context, method, path string, queryPar
 
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cl.accessToken))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.accessToken))
 
 	if queryParams != nil {
 		request.URL.RawQuery = queryParams.Encode()
 	}
 
-	return cl.httpClient.Do(request)
+	return c.httpClient.Do(request)
 }
