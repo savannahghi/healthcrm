@@ -260,3 +260,23 @@ type PractitionerOutput struct {
 	Services       []FacilityService                 `json:"services,omitempty"`
 	Qualifications string                            `json:"qualifications"`
 }
+
+// Specialties
+type SpecialtiesOutput struct {
+	ID             string                            `json:"id,omitempty"`
+	Name       string                            `json:"name"`
+	Description       string                            `json:"description"`
+	Identifiers []SpecialtyIdentifier `json:"identifiers,omitempty"`
+}
+
+type SpecialtiesPage struct {
+	Count       int                  `json:"count"`
+	Next        string               `json:"next"`
+	Previous    any                  `json:"previous"`
+	PageSize    int                  `json:"page_size"`
+	CurrentPage int                  `json:"current_page"`
+	TotalPages  int                  `json:"total_pages"`
+	StartIndex  int                  `json:"start_index"`
+	EndIndex    int                  `json:"end_index"`
+	Results     []SpecialtiesOutput `json:"results"`
+}

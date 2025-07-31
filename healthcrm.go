@@ -201,6 +201,43 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Paginat
 	return &PractitionerPage, nil
 }
 
+func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Pagination, crmServiceCode string) (*SpecialtiesPage, error) {
+	path := "/v1/practitioners/specialties/"
+
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
+	}
+
+	queryParams.Add("crm_service_code", crmServiceCode)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var specialtiesPage SpecialtiesPage
+	err = json.Unmarshal(respBytes, &specialtiesPage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &specialtiesPage, nil
+}
+
 // GetFacilitiesOfferingAService fetches the facilities that offer a particular service
 func (h *HealthCRMLib) GetFacilitiesOfferingAService(ctx context.Context, serviceID string, pagination *Pagination) (*FacilityPage, error) {
 	path := "/v1/facilities/facilities/"

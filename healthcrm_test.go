@@ -863,6 +863,115 @@ func HealthCRMLibGetPractitioners(t *testing.T) {
 	}
 }
 
+func HealthCRMLibGetSpecialties(t *testing.T) {
+	type args struct {
+		ctx            context.Context
+		specialtyID string
+		pagination     *Pagination
+		crmServiceCode string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: get all specialties",
+			args: args{
+				ctx: context.Background(),
+				pagination: &Pagination{
+					Page:     "2",
+					PageSize: "5",
+				},
+				crmServiceCode: "05",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: unable to get all specialties",
+			args: args{
+				ctx: context.Background(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to get Specialties",
+			args: args{
+				ctx:            context.Background(),
+				specialtyID: gofakeit.UUID(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx:            context.Background(),
+				specialtyID: gofakeit.UUID(),
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy case: get all services" {
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := &SpecialtiesPage{
+						Results: []SpecialtiesOutput{
+							{
+								ID:          gofakeit.UUID(),
+								Name:        gofakeit.BeerName(),
+								Description: gofakeit.HipsterSentence(56),
+								Identifiers: []*SpecialtyIdentifier{},
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: unable to get all practitioners" {
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+			if tt.name == "Sad case: unable to get specialty" {
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/?specialty=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.GetPractitioners(tt.args.ctx, tt.args.pagination, tt.args.crmServiceCode)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetPractitioners() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
 func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 	type args struct {
 		ctx        context.Context
