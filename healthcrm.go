@@ -164,7 +164,7 @@ func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination, 
 	return &facilityServicePage, nil
 }
 
-func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Pagination, crmServiceCode string) (*PractitionerPage, error) {
+func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Practitioners, error) {
 	path := "/v1/practitioners/practitioners/"
 
 	queryParams := url.Values{}
@@ -192,16 +192,16 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Paginat
 		return nil, errors.New(string(respBytes))
 	}
 
-	var PractitionerPage PractitionerPage
-	err = json.Unmarshal(respBytes, &PractitionerPage)
+	var practitioners Practitioners
+	err = json.Unmarshal(respBytes, &practitioners)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PractitionerPage, nil
+	return &practitioners, nil
 }
 
-func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Pagination, crmServiceCode string) (*SpecialtiesPage, error) {
+func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Specialties, error) {
 	path := "/v1/practitioners/specialties/"
 
 	queryParams := url.Values{}
@@ -229,13 +229,13 @@ func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Paginatio
 		return nil, errors.New(string(respBytes))
 	}
 
-	var specialtiesPage SpecialtiesPage
-	err = json.Unmarshal(respBytes, &specialtiesPage)
+	var specialties Specialties
+	err = json.Unmarshal(respBytes, &specialties)
 	if err != nil {
 		return nil, err
 	}
 
-	return &specialtiesPage, nil
+	return &specialties, nil
 }
 
 // GetFacilitiesOfferingAService fetches the facilities that offer a particular service
