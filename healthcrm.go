@@ -230,6 +230,7 @@ func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Paginatio
 	}
 
 	var specialties Specialties
+	
 	err = json.Unmarshal(respBytes, &specialties)
 	if err != nil {
 		return nil, err
