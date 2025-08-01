@@ -185,3 +185,78 @@ type IDVerificationResult struct {
 	UserDetails     UserDetails     `json:"patient_details"`
 	RegistryDetails RegistryDetails `json:"client_registry_details"`
 }
+
+type PractitionerBusinessHours struct {
+	ID             string `json:"id"`
+	Day            string `json:"day"`
+	OpeningTime    string `json:"opening_time"`
+	ClosingTime    string `json:"closing_time"`
+	PractitionerID string `json:"practitioner_id"`
+}
+
+// IdentifiersOutput is used to display practitioners identifiers
+type PractitionerIdentifier struct {
+	ID              string                     `json:"id"`
+	IdentifierType  PractitionerIdentifierType `json:"identifier_type"`
+	IdentifierValue string                     `json:"identifier_value"`
+	ValidFrom       string                     `json:"valid_from"`
+	ValidTo         string                     `json:"valid_to"`
+}
+
+type Practitioners struct {
+	Count       int            `json:"count"`
+	Next        *string        `json:"next"`
+	Previous    *string        `json:"previous"`
+	PageSize    int            `json:"page_size"`
+	CurrentPage int            `json:"current_page"`
+	TotalPages  int            `json:"total_pages"`
+	StartIndex  int            `json:"start_index"`
+	EndIndex    int            `json:"end_index"`
+	Results     []Practitioner `json:"results"`
+}
+
+// ContactsOutput is used to show practitioners contacts
+type PractitionerContact struct {
+	ID           string `json:"id"`
+	ContactType  string `json:"contact_type"`
+	ContactValue string `json:"contact_value"`
+	Role         string `json:"role"`
+}
+
+// specialty Identifier
+type SpecialtyIdentifier struct {
+	ID              string `json:"id"`
+	IdentifierType  string `json:"identifier_type"`
+	IdentifierValue string `json:"identifier_value"`
+	SpecialtyID     string `json:"specialty_id"`
+}
+
+type PractitionerSpecialty struct {
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Identifiers []SpecialtyIdentifier `json:"identifiers,omitempty"`
+}
+
+type Practitioner struct {
+	ID             string                      `json:"id,omitempty"`
+	Slug           string                      `json:"slug"`
+	Title          string                      `json:"title"`
+	FullName       string                      `json:"full_name"`
+	FirstName      string                      `json:"first_name"`
+	LastName       string                      `json:"last_name"`
+	OtherName      string                      `json:"other_name"`
+	DateOfBirth    string                      `json:"date_of_birth"`
+	Gender         GenderType                  `json:"gender"`
+	Country        string                      `json:"country,omitempty"`
+	Status         PractitionerStatus          `json:"status,omitempty"`
+	Address        string                      `json:"address,omitempty"`
+	BusinessHours  []PractitionerBusinessHours `json:"businesshours,omitempty"`
+	Coordinates    CoordinatesOutput           `json:"coordinates,omitempty"`
+	Distance       *float64                    `json:"distance,omitempty"`
+	Contacts       []PractitionerContact       `json:"contacts,omitempty"`
+	Identifiers    []PractitionerIdentifier    `json:"identifiers,omitempty"`
+	Specialties    []PractitionerSpecialty     `json:"specialties,omitempty"`
+	Services       []FacilityService           `json:"services,omitempty"`
+	Qualifications string                      `json:"qualifications"`
+}
