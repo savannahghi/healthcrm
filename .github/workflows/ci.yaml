@@ -54,7 +54,7 @@ jobs:
 
       - name: Run tests
         run: |
-          go-acc -o coverage.txt --ignore generated,cmd  ./... -- -timeout 60m
+          go-acc -o coverage.txt --ignore generated,cmd,input,output  ./... -- -timeout 60m
           grep -v "generated.go" coverage.txt > coverage.out
           go tool cover -html=coverage.out -o coverage.html
           gocov convert coverage.out > coverage.json

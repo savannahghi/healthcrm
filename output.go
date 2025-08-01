@@ -198,7 +198,7 @@ type PractitionerBusinessHours struct {
 type PractitionerIdentifier struct {
 	ID              string                     `json:"id"`
 	IdentifierType  PractitionerIdentifierType `json:"identifier_type"`
-	IdentifierValue PractitionerIdentifierType `json:"identifier_value"`
+	IdentifierValue string                     `json:"identifier_value"`
 	ValidFrom       string                     `json:"valid_from"`
 	ValidTo         string                     `json:"valid_to"`
 }

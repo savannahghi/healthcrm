@@ -164,6 +164,7 @@ func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination, 
 	return &facilityServicePage, nil
 }
 
+// GetPractitioners retrieves a list of practitioners associated with a specific CRM service code.
 func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Practitioners, error) {
 	path := "/v1/practitioners/practitioners/"
 
@@ -201,6 +202,7 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Paginat
 	return &practitioners, nil
 }
 
+// GetSpecialties retrieves a list of specialties associated with a specific CRM service code.
 func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Specialties, error) {
 	path := "/v1/practitioners/specialties/"
 
@@ -230,6 +232,7 @@ func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Paginatio
 	}
 
 	var specialties Specialties
+
 	err = json.Unmarshal(respBytes, &specialties)
 	if err != nil {
 		return nil, err
