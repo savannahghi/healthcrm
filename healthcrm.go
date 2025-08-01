@@ -164,6 +164,7 @@ func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination, 
 	return &facilityServicePage, nil
 }
 
+// GetPractitioners retrieves a list of practitioners associated with a specific CRM service code.
 func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Practitioners, error) {
 	path := "/v1/practitioners/practitioners/"
 
@@ -199,6 +200,45 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Paginat
 	}
 
 	return &practitioners, nil
+}
+
+// GetSpecialties retrieves a list of specialties associated with a specific CRM service code.
+func (h *HealthCRMLib) GetSpecialties(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Specialties, error) {
+	path := "/v1/practitioners/specialties/"
+
+	queryParams := url.Values{}
+
+	if pagination != nil {
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
+	}
+
+	queryParams.Add("crm_service_code", crmServiceCode)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var specialties Specialties
+
+	err = json.Unmarshal(respBytes, &specialties)
+	if err != nil {
+		return nil, err
+	}
+
+	return &specialties, nil
 }
 
 // GetFacilitiesOfferingAService fetches the facilities that offer a particular service
