@@ -912,7 +912,7 @@ func TestHealthCRMLib_GetSpecialties(t *testing.T) {
 				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &Specialties{
-						Results: []Specialty{
+						Results: []PractitionerSpecialty{
 							{
 								ID:          gofakeit.UUID(),
 								Name:        gofakeit.BeerName(),

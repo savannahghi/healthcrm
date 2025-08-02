@@ -261,22 +261,22 @@ type Practitioner struct {
 	Qualifications string                      `json:"qualifications"`
 }
 
-// Specialties
-type Specialty struct {
-	ID          string                `json:"id,omitempty"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Identifiers []SpecialtyIdentifier `json:"identifiers,omitempty"`
+type Specialties struct {
+	Count       int                     `json:"count"`
+	Next        *string                 `json:"next"`
+	Previous    *string                 `json:"previous"`
+	PageSize    int                     `json:"page_size"`
+	CurrentPage int                     `json:"current_page"`
+	TotalPages  int                     `json:"total_pages"`
+	StartIndex  int                     `json:"start_index"`
+	EndIndex    int                     `json:"end_index"`
+	Results     []PractitionerSpecialty `json:"results"`
 }
 
-type Specialties struct {
-	Count       int         `json:"count"`
-	Next        *string     `json:"next"`
-	Previous    *string     `json:"previous"`
-	PageSize    int         `json:"page_size"`
-	CurrentPage int         `json:"current_page"`
-	TotalPages  int         `json:"total_pages"`
-	StartIndex  int         `json:"start_index"`
-	EndIndex    int         `json:"end_index"`
-	Results     []Specialty `json:"results"`
+func (p Practitioner) NodeID() string {
+	return p.ID
+}
+
+func (p PractitionerSpecialty) NodeID() string {
+	return p.ID
 }
