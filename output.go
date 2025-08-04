@@ -63,6 +63,7 @@ type FacilityOutput struct {
 	BusinessHours []BusinessHoursOutput `json:"businesshours,omitempty"`
 	Services      []FacilityService     `json:"services,omitempty"`
 	IsAIResult    bool                  `json:"is_ai_result,omitempty"`
+	Photos        []FacilityPhoto       `json:"photos,omitempty"`
 }
 
 // BusinessHoursOutput models data that show facility's operational hours
@@ -279,4 +280,15 @@ func (p Practitioner) NodeID() string {
 
 func (p PractitionerSpecialty) NodeID() string {
 	return p.ID
+}
+
+// FacilityImage is the photo related to a Facility in HealthCRM
+type FacilityPhoto struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Document    string `json:"image_url"`
+	Size        int64  `json:"size"`
+	Description string `json:"description"`
+	ContentType string `json:"content_type"`
+	Facility    string `json:"facility_id"`
 }
