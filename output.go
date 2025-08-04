@@ -274,14 +274,6 @@ type Specialties struct {
 	Results     []PractitionerSpecialty `json:"results"`
 }
 
-func (p Practitioner) NodeID() string {
-	return p.ID
-}
-
-func (p PractitionerSpecialty) NodeID() string {
-	return p.ID
-}
-
 // FacilityImage is the photo related to a Facility in HealthCRM
 type FacilityPhoto struct {
 	ID          string `json:"id"`
