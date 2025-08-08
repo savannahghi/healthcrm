@@ -252,7 +252,7 @@ type Practitioner struct {
 	Country        string                      `json:"country,omitempty"`
 	Status         PractitionerStatus          `json:"status,omitempty"`
 	Address        string                      `json:"address,omitempty"`
-	BusinessHours  []PractitionerBusinessHours `json:"businesshours,omitempty"`
+	BusinessHours  []PractitionerBusinessHours `json:"business_hours,omitempty"`
 	Coordinates    CoordinatesOutput           `json:"coordinates,omitempty"`
 	Distance       *float64                    `json:"distance,omitempty"`
 	Contacts       []PractitionerContact       `json:"contacts,omitempty"`
