@@ -21,6 +21,21 @@ type Facility struct {
 	BusinessHours []BusinessHours `json:"businesshours,omitempty"`
 }
 
+// FilterFacilitiesInput takes in the parameters to filter facilities
+type FilterFacilitiesInput struct {
+	Location        *Coordinates
+	ServiceIDs      []string
+	SearchParameter string
+	Pagination      *Pagination
+	CrmServiceCode  string
+	IdentifierType  FacilityIdentifierType
+	IdentifierValue string
+}
+
+func (f FacilityIdentifierType) String() string {
+	return string(f)
+}
+
 // Coordinates represents geographical coordinates using latitude and longitude.
 // Latitude measures the north-south position, while longitude measures
 // the east-west position.

@@ -179,12 +179,8 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 
 func TestHealthCRMLib_GetFacilities(t *testing.T) {
 	type args struct {
-		ctx             context.Context
-		location        *Coordinates
-		serviceIDs      []string
-		pagination      *Pagination
-		searchParameter string
-		crmServiceCode  string
+		ctx     context.Context
+		filters FilterFacilitiesInput
 	}
 	tests := []struct {
 		name    string
@@ -195,16 +191,17 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			name: "Happy case: fetch facility(ies)",
 			args: args{
 				ctx: context.Background(),
-				location: &Coordinates{
+				filters: FilterFacilitiesInput{Location: &Coordinates{
 					Latitude:  "-1.29",
 					Longitude: "36.79",
 				},
-				serviceIDs: []string{"1234"},
-				pagination: &Pagination{
-					Page:     "1",
-					PageSize: "10",
+					ServiceIDs: []string{"1234"},
+					Pagination: &Pagination{
+						Page:     "1",
+						PageSize: "10",
+					},
+					CrmServiceCode: "05",
 				},
-				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -212,16 +209,17 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			name: "Happy case: fetch facilities",
 			args: args{
 				ctx: context.Background(),
-				location: &Coordinates{
+				filters: FilterFacilitiesInput{Location: &Coordinates{
 					Latitude:  "-1.29",
 					Longitude: "36.79",
 				},
-				serviceIDs: []string{"1234", "4567"},
-				pagination: &Pagination{
-					Page:     "1",
-					PageSize: "10",
+					ServiceIDs: []string{"1234", "4567"},
+					Pagination: &Pagination{
+						Page:     "1",
+						PageSize: "10",
+					},
+					CrmServiceCode: "05",
 				},
-				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -229,16 +227,18 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			name: "Happy case: search facility by service name",
 			args: args{
 				ctx: context.Background(),
-				location: &Coordinates{
-					Latitude:  "-1.29",
-					Longitude: "36.79",
+				filters: FilterFacilitiesInput{
+					Location: &Coordinates{
+						Latitude:  "-1.29",
+						Longitude: "36.79",
+					},
+					SearchParameter: "prep",
+					Pagination: &Pagination{
+						Page:     "1",
+						PageSize: "10",
+					},
+					CrmServiceCode: "05",
 				},
-				searchParameter: "prep",
-				pagination: &Pagination{
-					Page:     "1",
-					PageSize: "10",
-				},
-				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -257,11 +257,51 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Sad case: missing crm service code",
+			args: args{
+				ctx: context.Background(),
+				filters: FilterFacilitiesInput{
+					Location: &Coordinates{
+						Latitude:  "-1.29",
+						Longitude: "36.79",
+					},
+					SearchParameter: "prep",
+					Pagination: &Pagination{
+						Page:     "1",
+						PageSize: "10",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: have identifier_type but missing identifier_value",
+			args: args{
+				ctx: context.Background(),
+				filters: FilterFacilitiesInput{
+					Location: &Coordinates{
+						Latitude:  "-1.29",
+						Longitude: "36.79",
+					},
+					SearchParameter: "prep",
+					Pagination: &Pagination{
+						Page:     "1",
+						PageSize: "10",
+					},
+					CrmServiceCode: "05",
+					IdentifierType: FacilityIdentifierTypeMFLCode,
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Sad Case: Pass both service IDs and search parameter",
 			args: args{
-				ctx:             context.Background(),
-				serviceIDs:      []string{"1234"},
-				searchParameter: "Nairobi",
+				ctx: context.Background(),
+				filters: FilterFacilitiesInput{
+					ServiceIDs:      []string{"1234"},
+					SearchParameter: "Nairobi",
+				},
 			},
 			wantErr: true,
 		},
@@ -417,7 +457,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilities(tt.args.ctx, tt.args.location, tt.args.serviceIDs, tt.args.searchParameter, tt.args.pagination, tt.args.crmServiceCode)
+			_, err = h.GetFacilities(tt.args.ctx, tt.args.filters)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilities() error = %v, wantErr %v", err, tt.wantErr)
 				return
