@@ -364,8 +364,20 @@ func (h *HealthCRMLib) LinkServiceToFacility(ctx context.Context, facilityID str
 // This will return a list of all facilities ordered by the proximity
 //
 // Example 3: Retrieve all facilities without specifying location or services:
-func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates, serviceIDs []string, searchParameter string, pagination *Pagination, crmServiceCode string) (*FacilityPage, error) {
+func (h *HealthCRMLib) GetFacilities(ctx context.Context, filters FilterFacilitiesInput) (*FacilityPage, error) {
 	queryParams := url.Values{}
+
+	pagination := filters.Pagination
+	location := filters.Location
+	serviceIDs := filters.ServiceIDs
+	searchParameter := filters.SearchParameter
+	crmServiceCode := filters.CrmServiceCode
+	identifierType := filters.IdentifierType
+	identifierValue := filters.IdentifierValue
+
+	if crmServiceCode == "" {
+		return nil, errors.New("CRM service code must be provided")
+	}
 
 	if pagination != nil {
 		queryParams.Add("page_size", pagination.PageSize)
@@ -397,6 +409,17 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, location *Coordinates,
 
 	if searchParameter != "" {
 		queryParams.Add("search", searchParameter)
+	}
+
+	// Only add identifier type and value  params if both are provided
+	if identifierType != "" && identifierValue != "" {
+		queryParams.Add("identifier_type", identifierType.String())
+		queryParams.Add("identifier_value", identifierValue)
+	}
+
+	// If identifier type is provided but value is not, return an error
+	if identifierType != "" && identifierValue == "" {
+		return nil, errors.New("identifier value must be provided if identifier type is specified")
 	}
 
 	queryParams.Add("crm_service_code", crmServiceCode)

@@ -8,16 +8,6 @@ import (
 
 type IdentifierType string
 
-type ContactType string
-
-type GenderType string
-
-type MatchResult string
-
-type PractitionerStatus string
-
-type PractitionerIdentifierType string
-
 const (
 	// Identifier types
 	IdentifierTypeNationalID           IdentifierType = "NATIONAL_ID"
@@ -43,10 +33,14 @@ const (
 	IdentifierTypeTemporaryDependentID IdentifierType = "TEMPORARY_DEPENDENT_ID"
 )
 
+type ContactType string
+
 const (
 	ContactTypePhoneNumber ContactType = "PHONE_NUMBER"
 	ContactTypeEmail       ContactType = "EMAIL"
 )
+
+type GenderType string
 
 const (
 	GenderTypeMale   GenderType = "MALE"
@@ -58,28 +52,47 @@ const (
 	GenderTypeUNK GenderType = "UNK"
 )
 
+type MatchResult string
+
 const (
 	MatchResultMatch         MatchResult = "MATCH"
 	MatchResultPossibleMatch MatchResult = "POSSIBLE_MATCH"
 	MatchResultNoMatch       MatchResult = "NO_MATCH"
 )
 
+type PractitionerStatus string
+
 const (
 	PractitionerStatusDraft     PractitionerStatus = "DRAFT"
 	PractitionerStatusPublished PractitionerStatus = "PUBLISHED"
 )
 
+type PractitionerIdentifierType string
+
 const (
-	//nolint:all
-	SLADE_CODE                PractitionerIdentifierType = "SLADE_CODE"                //nolint:all
-	SHA_SLADE_CODE            PractitionerIdentifierType = "SHA_SLADE_CODE"            //nolint:all
-	NATIONAL_ID               PractitionerIdentifierType = "NATIONAL_ID"               //nolint:all
-	PASSPORT                  PractitionerIdentifierType = "PASSPORT"                  //nolint:all
-	KMPDC_REGISTRATION_NUMBER PractitionerIdentifierType = "KMPDC_REGISTRATION_NUMBER" //nolint:all
-	KMPDC_LICENSE_NUMBER      PractitionerIdentifierType = "KMPDC_LICENSE_NUMBER"      //nolint:all
-	ALIEN_ID                  PractitionerIdentifierType = "ALIEN_ID"                  //nolint:all
-	REFUGEE_ID                PractitionerIdentifierType = "REFUGEE_ID"                //nolint:all
-	CLIENT_REGISTRY_ID        PractitionerIdentifierType = "CLIENT_REGISTRY_ID"        //nolint:all
+	PractitionerIdentifierSladeCode               PractitionerIdentifierType = "SLADE_CODE"                //nolint:all
+	PractitionerIdentifierShaSladeCode            PractitionerIdentifierType = "SHA_SLADE_CODE"            //nolint:all
+	PractitionerIdentifierNationalId              PractitionerIdentifierType = "NATIONAL_ID"               //nolint:all
+	PractitionerIdentifierPassport                PractitionerIdentifierType = "PASSPORT"                  //nolint:all
+	PractitionerIdentifierKmpdcRegistrationNumber PractitionerIdentifierType = "KMPDC_REGISTRATION_NUMBER" //nolint:all
+	PractitionerIdentifierKmpdcLicenceNumber      PractitionerIdentifierType = "KMPDC_LICENSE_NUMBER"      //nolint:all
+	PractitionerIdentifierAlienId                 PractitionerIdentifierType = "ALIEN_ID"                  //nolint:all
+	PractitionerIdentifierRefugeeId               PractitionerIdentifierType = "REFUGEE_ID"                //nolint:all
+	PractitionerIdentifierClientRegistryId        PractitionerIdentifierType = "CLIENT_REGISTRY_ID"        //nolint:all
+)
+
+// FacilityIdentifierType is a list of all the facility identifier types.
+type FacilityIdentifierType string
+
+const (
+	FacilityIdentifierTypeMFLCode                FacilityIdentifierType = "MFL_CODE"                  //nolint:all
+	FacilityIdentifierTypeHealthCRM              FacilityIdentifierType = "HEALTH_CRM"                //nolint:all
+	FacilityIdentifierTypeSladeCode              FacilityIdentifierType = "SLADE_CODE"                //nolint:all
+	FacilityIdentifierTypeSHASladeCode           FacilityIdentifierType = "SHA_SLADE_CODE"            //nolint:all
+	FacilityIdentifierTypeFIDCode                FacilityIdentifierType = "FID_CODE"                  //nolint:all
+	FacilityIdentifierTypeFRCode                 FacilityIdentifierType = "FR_CODE"                   //nolint:all
+	FacilityIdentifierTypeKMPDCRegNumber         FacilityIdentifierType = "KMPDC_REG_NUMBER"          //nolint:all
+	FacilityIdentifierTypeSladeAdvantageBranchID FacilityIdentifierType = "SLADE_ADVANTAGE_BRANCH_ID" //nolint:all
 )
 
 // IsValid returns true if a contact type is valid
