@@ -63,7 +63,7 @@ type FacilityOutput struct {
 	BusinessHours []BusinessHoursOutput `json:"businesshours,omitempty"`
 	Services      []FacilityService     `json:"services,omitempty"`
 	IsAIResult    bool                  `json:"is_ai_result,omitempty"`
-	Photos        []FacilityPhoto       `json:"photos,omitempty"`
+	Photos        []FacilityPhoto       `json:"facility_images,omitempty"`
 }
 
 // BusinessHoursOutput models data that show facility's operational hours
@@ -278,7 +278,7 @@ type Specialties struct {
 type FacilityPhoto struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
-	Document    string `json:"image_url"`
+	ImageURL    string `json:"document"`
 	Size        int64  `json:"size"`
 	Description string `json:"description"`
 	ContentType string `json:"content_type"`
