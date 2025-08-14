@@ -136,3 +136,13 @@ type ProfileContactInput struct {
 type IDVerificationInput struct {
 	IDUrl string `json:"id_url"`
 }
+
+// FilterPractitionersInput takes in the parameters to filter practitioners
+type FilterPractitionersInput struct {
+	Specialty       string
+	Service         string
+	Pagination      *Pagination
+	CrmServiceCode  string
+	IdentifierType  string
+	IdentifierValue string
+}

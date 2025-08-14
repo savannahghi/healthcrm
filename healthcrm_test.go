@@ -794,12 +794,75 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 	}
 }
 
-func TestHealthCRMLib_GetPractitioners(t *testing.T) {
+// TestHealthCRMLib_GetPractitionerByID tests the GetPractitionerByID method of HealthCRMLib
+func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
 	type args struct {
 		ctx            context.Context
 		practitionerID string
-		pagination     *Pagination
-		crmServiceCode string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: get practitioner by practitionerID",
+			args: args{
+				ctx:            context.Background(),
+				practitionerID: "123",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: error getting practitioner by practitionerID",
+			args: args{
+				ctx:            context.Background(),
+				practitionerID: "123",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Happy case: get practitioner by practitionerID" {
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", BaseURL, tt.args.practitionerID)
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := &Practitioner{
+						ID: gofakeit.UUID(),
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: error getting practitioner by practitionerID" {
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", BaseURL, gofakeit.UUID())
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate()
+			h, err := NewHealthCRMLib()
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.GetPractitionerByID(tt.args.ctx, tt.args.practitionerID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetPractitionerByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+// TestHealthCRMLib_GetPractitioners tests the GetPractitioners method of HealthCRMLib
+func TestHealthCRMLib_GetPractitioners(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		filters FilterPractitionersInput
 	}
 	tests := []struct {
 		name    string
@@ -810,11 +873,13 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 			name: "Happy case: get all practitioners",
 			args: args{
 				ctx: context.Background(),
-				pagination: &Pagination{
-					Page:     "2",
-					PageSize: "5",
+				filters: FilterPractitionersInput{
+					Pagination: &Pagination{
+						Page:     "2",
+						PageSize: "5",
+					},
+					CrmServiceCode: "05",
 				},
-				crmServiceCode: "05",
 			},
 			wantErr: false,
 		},
@@ -826,18 +891,9 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Sad case: unable to get Practitioners",
+			name: "Sad case: wrong http method",
 			args: args{
-				ctx:            context.Background(),
-				practitionerID: gofakeit.UUID(),
-			},
-			wantErr: true,
-		},
-		{
-			name: "Sad case: unable to make request",
-			args: args{
-				ctx:            context.Background(),
-				practitionerID: gofakeit.UUID(),
+				ctx: context.Background(),
 			},
 			wantErr: true,
 		},
@@ -868,12 +924,7 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
-			if tt.name == "Sad case: unable to get practitioner" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/?practitioner=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
-				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
-					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
-				})
-			}
+
 			if tt.name == "Sad case: wrong http method" {
 				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
@@ -889,7 +940,7 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetPractitioners(tt.args.ctx, tt.args.pagination, tt.args.crmServiceCode)
+			_, err = h.GetPractitioners(tt.args.ctx, tt.args.filters)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetPractitioners() error = %v, wantErr %v", err, tt.wantErr)
 				return
