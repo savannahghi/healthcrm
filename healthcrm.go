@@ -165,17 +165,34 @@ func (h *HealthCRMLib) GetServices(ctx context.Context, pagination *Pagination, 
 }
 
 // GetPractitioners retrieves a list of practitioners associated with a specific CRM service code.
-func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Pagination, crmServiceCode string) (*Practitioners, error) {
+func (h *HealthCRMLib) GetPractitioners(ctx context.Context, filters FilterPractitionersInput) (*Practitioners, error) {
 	path := "/v1/practitioners/practitioners/"
 
 	queryParams := url.Values{}
 
-	if pagination != nil {
-		queryParams.Add("page_size", pagination.PageSize)
-		queryParams.Add("page", pagination.Page)
+	if filters.CrmServiceCode == "" {
+		return nil, errors.New("CRM service code must be provided")
 	}
 
-	queryParams.Add("crm_service_code", crmServiceCode)
+	if filters.Pagination != nil {
+		queryParams.Add("page_size", filters.Pagination.PageSize)
+		queryParams.Add("page", filters.Pagination.Page)
+	}
+
+	if filters.Specialty != "" {
+		queryParams.Add("specialty", filters.Specialty)
+	}
+
+	if filters.Service != "" {
+		queryParams.Add("service", filters.Service)
+	}
+
+	if filters.IdentifierType != "" && filters.IdentifierValue != "" {
+		queryParams.Add("identifier_type", filters.IdentifierType)
+		queryParams.Add("identifier_value", filters.IdentifierValue)
+	}
+
+	queryParams.Add("crm_service_code", filters.CrmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
@@ -200,6 +217,35 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, pagination *Paginat
 	}
 
 	return &practitioners, nil
+}
+
+// GetPractitionerByID retrieves a practitioner by their ID or slug.
+func (h *HealthCRMLib) GetPractitionerByID(ctx context.Context, practitionerID string) (*Practitioner, error) {
+	path := fmt.Sprintf("/v1/practitioners/practitioners/%s/", practitionerID)
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var practitioner *Practitioner
+
+	err = json.Unmarshal(respBytes, &practitioner)
+	if err != nil {
+		return nil, err
+	}
+
+	return practitioner, nil
 }
 
 // GetSpecialties retrieves a list of specialties associated with a specific CRM service code.
