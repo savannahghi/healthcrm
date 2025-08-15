@@ -49,6 +49,7 @@ type IdentifiersOutput struct {
 type FacilityOutput struct {
 	ID            string                `json:"id,omitempty"`
 	Created       time.Time             `json:"created,omitempty"`
+	Slug          string                `json:"slug"`
 	Name          string                `json:"name,omitempty"`
 	Description   string                `json:"description,omitempty"`
 	FacilityType  string                `json:"facility_type,omitempty"`
