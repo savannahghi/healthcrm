@@ -179,6 +179,14 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, filters FilterPract
 		queryParams.Add("page", filters.Pagination.Page)
 	}
 
+	if len(filters.Specialty) > 0 && filters.SearchParameter != "" {
+		return nil, errors.New("cannot filter by both specialty and search parameter")
+	}
+
+	if len(filters.Service) > 0 && filters.SearchParameter != "" {
+		return nil, errors.New("cannot filter by both service and search parameter")
+	}
+
 	if len(filters.Specialty) > 0 {
 		for _, id := range filters.Specialty {
 			queryParams.Add("specialty", id)
