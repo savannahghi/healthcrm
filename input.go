@@ -139,6 +139,7 @@ type IDVerificationInput struct {
 
 // FilterPractitionersInput takes in the parameters to filter practitioners
 type FilterPractitionersInput struct {
+	SearchParameter string
 	Specialty       []string
 	Service         []string
 	Pagination      *Pagination
