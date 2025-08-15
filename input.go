@@ -139,8 +139,8 @@ type IDVerificationInput struct {
 
 // FilterPractitionersInput takes in the parameters to filter practitioners
 type FilterPractitionersInput struct {
-	Specialty       string
-	Service         string
+	Specialty       []string
+	Service         []string
 	Pagination      *Pagination
 	CrmServiceCode  string
 	IdentifierType  string
