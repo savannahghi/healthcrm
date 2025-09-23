@@ -261,6 +261,7 @@ type Practitioner struct {
 	Specialties    []PractitionerSpecialty     `json:"specialties,omitempty"`
 	Services       []FacilityService           `json:"services,omitempty"`
 	Qualifications string                      `json:"qualifications"`
+	Photos         []PractitionerPhoto         `json:"practitioner_images,omitempty"`
 }
 
 type Specialties struct {
@@ -275,7 +276,7 @@ type Specialties struct {
 	Results     []PractitionerSpecialty `json:"results"`
 }
 
-// FacilityImage is the photo related to a Facility in HealthCRM
+// FacilityPhoto is the photo related to a Facility in HealthCRM
 type FacilityPhoto struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
@@ -284,4 +285,15 @@ type FacilityPhoto struct {
 	Description string `json:"description"`
 	ContentType string `json:"content_type"`
 	Facility    string `json:"facility_id"`
+}
+
+// PractitionerPhoto is the photo related to a Practitioner in HealthCRM
+type PractitionerPhoto struct {
+	ID           string `json:"id"`
+	Title        string `json:"title"`
+	ImageURL     string `json:"document"`
+	Size         int64  `json:"size"`
+	Description  string `json:"description"`
+	ContentType  string `json:"content_type"`
+	Practitioner string `json:"practitioner_id"`
 }
