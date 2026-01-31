@@ -52,7 +52,7 @@ func newClient() (*client, error) {
 	c := client{
 		authClient: slade360AuthClient,
 		httpClient: &http.Client{
-			Timeout: time.Second * 10,
+			Timeout: time.Minute * 1,
 		},
 		accessToken:  "",
 		refreshToken: "",
