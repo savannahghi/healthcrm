@@ -79,6 +79,7 @@ const (
 	PractitionerIdentifierAlienId                 PractitionerIdentifierType = "ALIEN_ID"                  //nolint:all
 	PractitionerIdentifierRefugeeId               PractitionerIdentifierType = "REFUGEE_ID"                //nolint:all
 	PractitionerIdentifierClientRegistryId        PractitionerIdentifierType = "CLIENT_REGISTRY_ID"        //nolint:all
+	PractitionerTypeSladeAdvantageBranchID        PractitionerIdentifierType = "SLADE_ADVANTAGE_BRANCH_ID" //nolint:all
 )
 
 // FacilityIdentifierType is a list of all the facility identifier types.
