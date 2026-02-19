@@ -12,10 +12,8 @@ import (
 	"github.com/savannahghi/serverutils"
 )
 
-var (
-	// BaseURL represents the health CRM's base URL
-	BaseURL = serverutils.MustGetEnvVar("HEALTH_CRM_BASE_URL")
-)
+// BaseURL represents the health CRM's base URL
+var BaseURL = serverutils.MustGetEnvVar("HEALTH_CRM_BASE_URL")
 
 const (
 	facilitiesPath = "/v1/facilities/facilities/"
@@ -170,45 +168,53 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, filters FilterPract
 
 	queryParams := url.Values{}
 
-	if filters.CrmServiceCode == "" {
+	crmServiceCode := filters.CrmServiceCode
+	pagination := filters.Pagination
+	specialty := filters.Specialty
+	service := filters.Service
+	searchParameter := filters.SearchParameter
+	idType := filters.IdentifierType
+	idValue := filters.IdentifierValue
+
+	if crmServiceCode == "" {
 		return nil, errors.New("CRM service code must be provided")
 	}
 
-	if filters.Pagination != nil {
-		queryParams.Add("page_size", filters.Pagination.PageSize)
-		queryParams.Add("page", filters.Pagination.Page)
+	if pagination != nil {
+		queryParams.Add("page_size", pagination.PageSize)
+		queryParams.Add("page", pagination.Page)
 	}
 
-	if len(filters.Specialty) > 0 && filters.SearchParameter != "" {
+	if len(specialty) > 0 && searchParameter != "" {
 		return nil, errors.New("cannot filter by both specialty and search parameter")
 	}
 
-	if len(filters.Service) > 0 && filters.SearchParameter != "" {
+	if len(service) > 0 && searchParameter != "" {
 		return nil, errors.New("cannot filter by both service and search parameter")
 	}
 
-	if filters.SearchParameter != "" {
-		queryParams.Add("search", filters.SearchParameter)
+	if searchParameter != "" {
+		queryParams.Add("search", searchParameter)
 	}
 
-	if len(filters.Specialty) > 0 {
-		for _, id := range filters.Specialty {
+	if len(specialty) > 0 {
+		for _, id := range specialty {
 			queryParams.Add("specialty", id)
 		}
 	}
 
-	if len(filters.Service) > 0 {
-		for _, id := range filters.Service {
+	if len(service) > 0 {
+		for _, id := range service {
 			queryParams.Add("service", id)
 		}
 	}
 
-	if filters.IdentifierType != "" && filters.IdentifierValue != "" {
-		queryParams.Add("identifier_type", filters.IdentifierType)
-		queryParams.Add("identifier_value", filters.IdentifierValue)
+	if idType != "" && idValue != "" {
+		queryParams.Add("identifier_type", idType)
+		queryParams.Add("identifier_value", idValue)
 	}
 
-	queryParams.Add("crm_service_code", filters.CrmServiceCode)
+	queryParams.Add("crm_service_code", crmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
