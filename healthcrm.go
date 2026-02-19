@@ -176,8 +176,8 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, filters FilterPract
 	idType := filters.IdentifierType
 	idValue := filters.IdentifierValue
 
-	if crmServiceCode == "" {
-		return nil, errors.New("CRM service code must be provided")
+	if crmServiceCode != "" {
+		queryParams.Add("crm_service_code", crmServiceCode)
 	}
 
 	if pagination != nil {
@@ -213,8 +213,6 @@ func (h *HealthCRMLib) GetPractitioners(ctx context.Context, filters FilterPract
 		queryParams.Add("identifier_type", idType)
 		queryParams.Add("identifier_value", idValue)
 	}
-
-	queryParams.Add("crm_service_code", crmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
 	if err != nil {
