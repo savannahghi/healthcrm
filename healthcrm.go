@@ -441,8 +441,8 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, filters FilterFaciliti
 	identifierType := filters.IdentifierType
 	identifierValue := filters.IdentifierValue
 
-	if crmServiceCode == "" {
-		return nil, errors.New("CRM service code must be provided")
+	if crmServiceCode != "" {
+		queryParams.Add("crm_service_code", crmServiceCode)
 	}
 
 	if pagination != nil {
@@ -487,8 +487,6 @@ func (h *HealthCRMLib) GetFacilities(ctx context.Context, filters FilterFaciliti
 	if identifierType != "" && identifierValue == "" {
 		return nil, errors.New("identifier value must be provided if identifier type is specified")
 	}
-
-	queryParams.Add("crm_service_code", crmServiceCode)
 
 	response, err := h.client.MakeRequest(ctx, http.MethodGet, facilitiesPath, queryParams, nil)
 	if err != nil {
