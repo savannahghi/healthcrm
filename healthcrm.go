@@ -8,12 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/savannahghi/serverutils"
 )
-
-// BaseURL represents the health CRM's base URL
-var BaseURL = serverutils.MustGetEnvVar("HEALTH_CRM_BASE_URL")
 
 const (
 	facilitiesPath = "/v1/facilities/facilities/"
@@ -25,8 +20,8 @@ type HealthCRMLib struct {
 }
 
 // NewHealthCRMLib initializes a new instance of healthCRM SDK
-func NewHealthCRMLib() (*HealthCRMLib, error) {
-	client, err := newClient()
+func NewHealthCRMLib(cfg Config) (*HealthCRMLib, error) {
+	client, err := newClient(cfg)
 	if err != nil {
 		return nil, err
 	}
