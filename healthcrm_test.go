@@ -12,12 +12,11 @@ import (
 	"github.com/savannahghi/authutils"
 	"github.com/savannahghi/enumutils"
 	"github.com/savannahghi/scalarutils"
-	"github.com/savannahghi/serverutils"
 )
 
 // MockAuthenticate mocks a mock login request to obtain a token
-func MockAuthenticate() {
-	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+func MockAuthenticate(cfg Config) {
+	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 		resp := authutils.OAUTHResponse{
 			Scope:        "",
 			ExpiresIn:    3600,
@@ -29,7 +28,22 @@ func MockAuthenticate() {
 	})
 }
 
+// mockConfig returns configuration values for SDK tests
+func mockConfig() Config {
+	return Config{
+		AuthServerEndpoint: "http://mock-auth",
+		ClientID:           "test-client-id",
+		ClientSecret:       "test-secret",
+		GrantType:          "password",
+		Username:           "test-user",
+		Password:           "test-password",
+		BaseURL:            "http://mock-api",
+	}
+}
+
 func TestHealthCRMLib_CreateFacility(t *testing.T) {
+	cfg := mockConfig()
+
 	type args struct {
 		ctx      context.Context
 		facility *Facility
@@ -100,7 +114,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: create facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -130,7 +144,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to create facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &Facility{
 						ID:            gofakeit.UUID(),
@@ -149,7 +163,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -163,8 +177,8 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -178,6 +192,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetFacilities(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx     context.Context
 		filters FilterFacilitiesInput
@@ -309,7 +324,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: fetch facility(ies)" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -339,7 +354,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 				})
 			}
 			if tt.name == "Happy case: fetch facilities" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					service1 := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -399,7 +414,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			}
 
 			if tt.name == "Happy case: search facility by service name" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -430,14 +445,14 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to fetch facility(ies)" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
 				})
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -451,8 +466,8 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -467,6 +482,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx context.Context
 		id  string
@@ -504,7 +520,7 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", BaseURL, "123")
+				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", cfg.BaseURL, "123")
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -535,14 +551,14 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to get facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", BaseURL, "123")
+				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", cfg.BaseURL, "123")
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
 				})
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -556,8 +572,8 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -572,6 +588,7 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 }
 
 func TestHealthCRMLib_UpdateFacility(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx           context.Context
 		id            string
@@ -619,7 +636,7 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: update facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", BaseURL, "123")
+				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", cfg.BaseURL, "123")
 				httpmock.RegisterResponder(http.MethodPatch, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -649,14 +666,14 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to update facility" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", BaseURL, "123")
+				path := fmt.Sprintf("%s/v1/facilities/facilities/%s/", cfg.BaseURL, "123")
 				httpmock.RegisterResponder(http.MethodPatch, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -670,8 +687,8 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -686,6 +703,7 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetServices(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx            context.Context
 		facilityID     string
@@ -736,7 +754,7 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get all services" {
-				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityServicePage{
 						Results: []FacilityService{
@@ -753,19 +771,19 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to get all services" {
-				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to get facility services" {
-				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/?facility=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -779,8 +797,8 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -796,6 +814,7 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 
 // TestHealthCRMLib_GetPractitionerByID tests the GetPractitionerByID method of HealthCRMLib
 func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx            context.Context
 		practitionerID string
@@ -825,7 +844,7 @@ func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get practitioner by practitionerID" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", BaseURL, tt.args.practitionerID)
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", cfg.BaseURL, tt.args.practitionerID)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &Practitioner{
 						ID: gofakeit.UUID(),
@@ -835,7 +854,7 @@ func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: error getting practitioner by practitionerID" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", BaseURL, gofakeit.UUID())
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/%s/", cfg.BaseURL, gofakeit.UUID())
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadRequest, nil)
 				})
@@ -843,8 +862,8 @@ func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -860,6 +879,7 @@ func TestHealthCRMLib_GetPractitionerByID(t *testing.T) {
 
 // TestHealthCRMLib_GetPractitioners tests the GetPractitioners method of HealthCRMLib
 func TestHealthCRMLib_GetPractitioners(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx     context.Context
 		filters FilterPractitionersInput
@@ -901,7 +921,7 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get all practitioners" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &Practitioners{
 						Results: []Practitioner{
@@ -919,14 +939,14 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to get all practitioners" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 
 			if tt.name == "Sad case: wrong http method" {
-				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/practitioners/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
@@ -934,8 +954,8 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -950,6 +970,7 @@ func TestHealthCRMLib_GetPractitioners(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetSpecialties(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx            context.Context
 		specialtyID    string
@@ -1000,7 +1021,7 @@ func TestHealthCRMLib_GetSpecialties(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get all specialties" {
-				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &Specialties{
 						Results: []PractitionerSpecialty{
@@ -1016,19 +1037,19 @@ func TestHealthCRMLib_GetSpecialties(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to get all specialties" {
-				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to get specialties" {
-				path := fmt.Sprintf("%s/v1/practitioners/specialties/?specialty=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/?specialty=1b5baf1a-1aec-48bd-951c-01896e5fe5a8", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: wrong http method" {
-				path := fmt.Sprintf("%s/v1/practitioners/specialties/", BaseURL)
+				path := fmt.Sprintf("%s/v1/practitioners/specialties/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
@@ -1036,8 +1057,8 @@ func TestHealthCRMLib_GetSpecialties(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1052,6 +1073,7 @@ func TestHealthCRMLib_GetSpecialties(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx        context.Context
 		serviceID  string
@@ -1101,7 +1123,7 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get facilities offering a service" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityOutput{
 						ID:           gofakeit.UUID(),
@@ -1131,13 +1153,13 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to get facilities offering a service" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1151,8 +1173,8 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1167,6 +1189,7 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 }
 
 func TestHealthCRMLib_CreateService(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx   context.Context
 		input FacilityServiceInput
@@ -1231,7 +1254,7 @@ func TestHealthCRMLib_CreateService(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: create a service" {
-				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityService{
 						ID:          gofakeit.UUID(),
@@ -1250,13 +1273,13 @@ func TestHealthCRMLib_CreateService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to create a service" {
-				path := fmt.Sprintf("%s/v1/facilities/services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1270,8 +1293,8 @@ func TestHealthCRMLib_CreateService(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1285,6 +1308,7 @@ func TestHealthCRMLib_CreateService(t *testing.T) {
 }
 
 func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx        context.Context
 		facilityID string
@@ -1359,7 +1383,7 @@ func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: link facility to service" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityService{
 						ID:          gofakeit.UUID(),
@@ -1378,13 +1402,13 @@ func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to link facility to service" {
-				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/facilities/b6792568-564f-41ca-b951-69fae05e6ca1/add_services/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1398,8 +1422,8 @@ func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1414,6 +1438,7 @@ func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetService(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx       context.Context
 		serviceID string
@@ -1451,7 +1476,7 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy case: get service" {
-				path := fmt.Sprintf("%s/v1/facilities/services/b7142d0f-88a0-436b-976d-4ecc86482107", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/b7142d0f-88a0-436b-976d-4ecc86482107", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					resp := &FacilityService{
 						ID:          gofakeit.UUID(),
@@ -1470,13 +1495,13 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to get a service" {
-				path := fmt.Sprintf("%s/v1/facilities/services/b7142d0f-88a0-436b-976d-4ecc86482107", BaseURL)
+				path := fmt.Sprintf("%s/v1/facilities/services/b7142d0f-88a0-436b-976d-4ecc86482107", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1490,8 +1515,8 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1506,6 +1531,7 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 }
 
 func TestHealthCRMLib_CreateProfile(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx     context.Context
 		profile *ProfileInput
@@ -1581,7 +1607,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy Case: Create Profile" {
-				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
+				path := fmt.Sprintf("%s/v1/identities/profiles/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileOutput{
 						ID:        gofakeit.UUID(),
@@ -1593,7 +1619,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Create Profile" {
-				path := fmt.Sprintf("%s/v1/identities/profiles/", BaseURL)
+				path := fmt.Sprintf("%s/v1/identities/profiles/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileInput{
 						ProfileID:     gofakeit.UUID(),
@@ -1612,7 +1638,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Make Request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1626,8 +1652,8 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1641,6 +1667,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx         context.Context
 		servicesIDs []string
@@ -1706,7 +1733,7 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/facilities/services?service_ids=0fee2792-dffc-40d3-a744-2a70732b1053,56c62083-c7b4-4055-8d44-6cc7446ac1d0,8474ea55-8ede-4bc6-aa67-f53ed5456a03", BaseURL)
+			path := fmt.Sprintf("%s/v1/facilities/services?service_ids=0fee2792-dffc-40d3-a744-2a70732b1053,56c62083-c7b4-4055-8d44-6cc7446ac1d0,8474ea55-8ede-4bc6-aa67-f53ed5456a03", cfg.BaseURL)
 
 			if tt.name == "Happy case: get list of services" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -1751,7 +1778,7 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1766,9 +1793,9 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
 
-			MockAuthenticate()
+			MockAuthenticate(cfg)
 
-			h, err := NewHealthCRMLib()
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1783,6 +1810,7 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx         context.Context
 		facilityIDs []string
@@ -1848,7 +1876,7 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/facilities/facilities?facility_ids=556a1dd9-fbb5-40c2-a623-dde9a2335597,7f59c528-8d9e-4a97-a9e5-bea7d7938c0e,b8246d32-b9e7-422c-b3bb-a1066dec8561", BaseURL)
+			path := fmt.Sprintf("%s/v1/facilities/facilities?facility_ids=556a1dd9-fbb5-40c2-a623-dde9a2335597,7f59c528-8d9e-4a97-a9e5-bea7d7938c0e,b8246d32-b9e7-422c-b3bb-a1066dec8561", cfg.BaseURL)
 
 			if tt.name == "Happy case: get list of facilities" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -1877,7 +1905,7 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -1892,9 +1920,9 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
 
-			MockAuthenticate()
+			MockAuthenticate(cfg)
 
-			h, err := NewHealthCRMLib()
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -1909,6 +1937,7 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
+	cfg := mockConfig()
 	invalid := IdentifierType("invalid")
 
 	payer := IdentifierTypePayerMemberNo
@@ -2003,7 +2032,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/identifiers/", BaseURL)
+			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/identifiers/", cfg.BaseURL)
 
 			if tt.name == "Happy case: get list of identifiers" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -2123,7 +2152,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -2138,9 +2167,9 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
 
-			MockAuthenticate()
+			MockAuthenticate(cfg)
 
-			h, err := NewHealthCRMLib()
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -2155,6 +2184,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 }
 
 func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx      context.Context
 		healthID string
@@ -2207,7 +2237,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/contacts/", BaseURL)
+			path := fmt.Sprintf("%s/v1/identities/persons/0000010000000041/contacts/", cfg.BaseURL)
 
 			if tt.name == "Happy case: get list of contacts" {
 				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
@@ -2272,7 +2302,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -2287,9 +2317,9 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
 
-			MockAuthenticate()
+			MockAuthenticate(cfg)
 
-			h, err := NewHealthCRMLib()
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -2304,6 +2334,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 }
 
 func TestHealthCRMLib_MatchProfile(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx     context.Context
 		profile *ProfileInput
@@ -2380,7 +2411,7 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Happy Case: Match Profile" {
-				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", BaseURL)
+				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileOutput{
 						ID:             gofakeit.UUID(),
@@ -2393,7 +2424,7 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Match Profile" {
-				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", BaseURL)
+				path := fmt.Sprintf("%s/v1/identities/profiles/match_profile/", cfg.BaseURL)
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					resp := &ProfileInput{
 						ProfileID:     gofakeit.UUID(),
@@ -2412,7 +2443,7 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Make Request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT")), func(r *http.Request) (*http.Response, error) {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
 					resp := authutils.OAUTHResponse{
 						Scope:        "",
 						ExpiresIn:    3600,
@@ -2426,8 +2457,8 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
-			h, err := NewHealthCRMLib()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
@@ -2441,6 +2472,7 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 }
 
 func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
+	cfg := mockConfig()
 	type args struct {
 		ctx   context.Context
 		input IDVerificationInput
@@ -2486,7 +2518,7 @@ func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
-			MockAuthenticate()
+			MockAuthenticate(cfg)
 
 			if tt.name == "happy case: verify id document" {
 				path := "/v1/identities/identifiers/verify/"
@@ -2523,7 +2555,7 @@ func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
 				})
 			}
 
-			h, err := NewHealthCRMLib()
+			h, err := NewHealthCRMLib(cfg)
 			if err != nil {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/savannahghi/authutils"
-	"github.com/savannahghi/serverutils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +17,7 @@ var (
 	accessTokenTimeout = 59 * time.Minute
 )
 
-// IAuthUtilsLib holds the method defined in authutils library
+// AuthUtilsLib holds the method defined in authutils library
 type authUtilsLib interface {
 	Authenticate() (*authutils.OAUTHResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*authutils.OAUTHResponse, error)
@@ -32,19 +31,31 @@ type client struct {
 	accessToken       string
 	accessTokenTicker *time.Ticker
 	authFailed        bool
+	baseURL           string
+}
+
+// Config contains the settings required to initialize a health crm client
+type Config struct {
+	AuthServerEndpoint string
+	ClientID           string
+	ClientSecret       string
+	GrantType          string
+	Username           string
+	Password           string
+	BaseURL            string
 }
 
 // newClient is the constructor which initializes health crm's authentication mechanism
-func newClient() (*client, error) {
-	config := authutils.Config{
-		AuthServerEndpoint: serverutils.MustGetEnvVar("HEALTH_CRM_AUTH_SERVER_ENDPOINT"),
-		ClientID:           serverutils.MustGetEnvVar("HEALTH_CRM_CLIENT_ID"),
-		ClientSecret:       serverutils.MustGetEnvVar("HEALTH_CRM_CLIENT_SECRET"),
-		GrantType:          serverutils.MustGetEnvVar("HEALTH_CRM_GRANT_TYPE"),
-		Username:           serverutils.MustGetEnvVar("HEALTH_CRM_USERNAME"),
-		Password:           serverutils.MustGetEnvVar("HEALTH_CRM_PASSWORD"),
+func newClient(cfg Config) (*client, error) {
+	authCfg := authutils.Config{
+		AuthServerEndpoint: cfg.AuthServerEndpoint,
+		ClientID:           cfg.ClientID,
+		ClientSecret:       cfg.ClientSecret,
+		GrantType:          cfg.GrantType,
+		Username:           cfg.Username,
+		Password:           cfg.Password,
 	}
-	slade360AuthClient, err := authutils.NewClient(config)
+	slade360AuthClient, err := authutils.NewClient(authCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +68,7 @@ func newClient() (*client, error) {
 		accessToken:  "",
 		refreshToken: "",
 		authFailed:   false,
+		baseURL:      cfg.BaseURL,
 	}
 
 	err = c.login()
@@ -126,7 +138,7 @@ func (c *client) refreshAccessToken() error {
 
 // MakeRequest performs a HTTP request to the provided path and parameters
 func (c *client) MakeRequest(ctx context.Context, method, path string, queryParams url.Values, body interface{}) (*http.Response, error) {
-	urlPath := fmt.Sprintf("%s%s", BaseURL, path)
+	urlPath := fmt.Sprintf("%s%s", c.baseURL, path)
 
 	var request *http.Request
 	switch method {
