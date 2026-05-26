@@ -1,0 +1,69 @@
+name: Test
+
+on: [push]
+
+env:
+  HEALTH_CRM_AUTH_SERVER_ENDPOINT: ${{ secrets.HEALTH_CRM_AUTH_SERVER_ENDPOINT }}
+  HEALTH_CRM_CLIENT_ID: ${{ secrets.HEALTH_CRM_CLIENT_ID }}
+  HEALTH_CRM_CLIENT_SECRET: ${{ secrets.HEALTH_CRM_CLIENT_SECRET }}
+  HEALTH_CRM_GRANT_TYPE: ${{ secrets.HEALTH_CRM_GRANT_TYPE }}
+  HEALTH_CRM_USERNAME: ${{ secrets.HEALTH_CRM_USERNAME }}
+  HEALTH_CRM_PASSWORD: ${{ secrets.HEALTH_CRM_PASSWORD }}
+  HEALTH_CRM_BASE_URL: ${{ secrets.HEALTH_CRM_BASE_URL }}
+
+jobs:
+  golangci:
+    strategy:
+      matrix:
+        go-version: [1.23.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.2.0
+
+  lint_and_test:
+    needs: [golangci]
+    strategy:
+      matrix:
+        go-version: [1.23.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install Go dependencies
+        run: |
+          go mod download
+          go get github.com/axw/gocov/gocov
+          go get github.com/ory/go-acc
+          go install github.com/ory/go-acc
+          go install github.com/axw/gocov/gocov
+          go get github.com/savannahghi/firebasetools@v0.0.19
+
+      - name: Run tests
+        run: |
+          go-acc -o coverage.txt --ignore generated,cmd  ./... -- -timeout 60m
+          grep -v "generated.go" coverage.txt > coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+          gocov convert coverage.out > coverage.json
+          gocov report coverage.json > coverage_report.txt
+          tail coverage_report.txt
+
+      - name: Install goveralls
+        run: GO111MODULE=on go install github.com/mattn/goveralls@latest
+      - name: Send coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goveralls -coverprofile=coverage.out  -service=github
