@@ -11,6 +11,7 @@ import (
 
 	"github.com/savannahghi/authutils"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -63,7 +64,8 @@ func newClient(cfg Config) (*client, error) {
 	c := client{
 		authClient: slade360AuthClient,
 		httpClient: &http.Client{
-			Timeout: time.Minute * 1,
+			Timeout:   time.Minute * 1,
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
 		},
 		accessToken:  "",
 		refreshToken: "",
