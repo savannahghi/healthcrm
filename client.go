@@ -9,13 +9,13 @@ import (
 	"net/url"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
 	"github.com/savannahghi/authutils"
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	accessTokenTimeout = 59 * time.Minute
-)
+var accessTokenTimeout = 59 * time.Minute
 
 // AuthUtilsLib holds the method defined in authutils library
 type authUtilsLib interface {
@@ -38,10 +38,10 @@ type client struct {
 type Config struct {
 	AuthServerEndpoint string
 	ClientID           string
-	ClientSecret       string
+	ClientSecret       string // nolint: gosec
 	GrantType          string
 	Username           string
-	Password           string
+	Password           string // nolint: gosec
 	BaseURL            string
 }
 
@@ -63,7 +63,8 @@ func newClient(cfg Config) (*client, error) {
 	c := client{
 		authClient: slade360AuthClient,
 		httpClient: &http.Client{
-			Timeout: time.Minute * 1,
+			Timeout:   time.Second * 15,
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
 		},
 		accessToken:  "",
 		refreshToken: "",
@@ -176,5 +177,5 @@ func (c *client) MakeRequest(ctx context.Context, method, path string, queryPara
 		request.URL.RawQuery = queryParams.Encode()
 	}
 
-	return c.httpClient.Do(request)
+	return c.httpClient.Do(request) // nolint: gosec
 }

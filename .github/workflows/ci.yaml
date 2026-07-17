@@ -15,7 +15,7 @@ jobs:
   golangci:
     strategy:
       matrix:
-        go-version: [1.23.x]
+        go-version: [1.25.x]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -26,13 +26,13 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.2.0
+          version: v2.10.1
 
   lint_and_test:
     needs: [golangci]
     strategy:
       matrix:
-        go-version: [1.23.x]
+        go-version: [1.25.x]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 80
@@ -44,21 +44,13 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Install Go dependencies
-        run: |
-          go mod download
-          go get github.com/axw/gocov/gocov
-          go get github.com/ory/go-acc
-          go install github.com/ory/go-acc
-          go install github.com/axw/gocov/gocov
-          go get github.com/savannahghi/firebasetools@v0.0.19
+        run: go mod download
 
       - name: Run tests
         run: |
-          go-acc -o coverage.txt --ignore generated,cmd  ./... -- -timeout 60m
-          grep -v "generated.go" coverage.txt > coverage.out
+          go test -coverpkg=./... -coverprofile=coverage.out -timeout 60m ./...
           go tool cover -html=coverage.out -o coverage.html
-          gocov convert coverage.out > coverage.json
-          gocov report coverage.json > coverage_report.txt
+          go tool cover -func=coverage.out > coverage_report.txt
           tail coverage_report.txt
 
       - name: Install goveralls
