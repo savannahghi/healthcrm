@@ -800,3 +800,100 @@ func (h *HealthCRMLib) VerifyIdentifierDocument(ctx context.Context, input IDVer
 
 	return &result, nil
 }
+
+// CreateFacilityIdentifier adds an identifier to an existing facility.
+//
+// A facility holds at most one identifier per type.
+func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *FacilityIdentifierInput) (*IdentifiersOutput, error) {
+	if input == nil {
+		return nil, errors.New("facility identifier input must be provided")
+	}
+
+	if input.FacilityID == "" {
+		return nil, errors.New("facility ID must be provided")
+	}
+
+	if !input.IdentifierType.IsValid() {
+		return nil, fmt.Errorf("invalid facility identifier type provided: %s", input.IdentifierType)
+	}
+
+	if input.IdentifierValue == "" {
+		return nil, errors.New("identifier value must be provided")
+	}
+
+	path := "/v1/facilities/identifiers/"
+
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, input)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var identifier *IdentifiersOutput
+
+	err = json.Unmarshal(respBytes, &identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return identifier, nil
+}
+
+// CreatePractitionerIdentifier adds an identifier to an existing practitioner.
+//
+// A practitioner may hold several identifiers of the same type as long as the
+// values differ; only an exact type and value repeat is rejected.
+func (h *HealthCRMLib) CreatePractitionerIdentifier(ctx context.Context, input *PractitionerIdentifierInput) (*PractitionerIdentifier, error) {
+	if input == nil {
+		return nil, errors.New("practitioner identifier input must be provided")
+	}
+
+	if input.PractitionerID == "" {
+		return nil, errors.New("practitioner ID must be provided")
+	}
+
+	if !input.IdentifierType.IsValid() {
+		return nil, fmt.Errorf("invalid practitioner identifier type provided: %s", input.IdentifierType)
+	}
+
+	if input.IdentifierValue == "" {
+		return nil, errors.New("identifier value must be provided")
+	}
+
+	path := "/v1/practitioners/identifiers/"
+
+	response, err := h.client.MakeRequest(ctx, http.MethodPost, path, nil, input)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var identifier *PractitionerIdentifier
+
+	err = json.Unmarshal(respBytes, &identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return identifier, nil
+}
