@@ -37,12 +37,17 @@ type ContactsOutput struct {
 
 // IdentifiersOutput is used to display facility identifiers
 type IdentifiersOutput struct {
-	ID              string `json:"id"`
+	ID string `json:"id"`
+	// IdentifierType is returned as the human readable label
+	// (e.g. "Slade Advantage Branch ID"), not the code that was sent. Comparing
+	// it against a FacilityIdentifierType constant will not match.
 	IdentifierType  string `json:"identifier_type"`
 	IdentifierValue string `json:"identifier_value"`
 	ValidFrom       string `json:"valid_from"`
 	ValidTo         string `json:"valid_to"`
 	FacilityID      string `json:"facility_id"`
+	// Source is derived server side from the identifier type and is read only.
+	Source string `json:"source"`
 }
 
 // FacilityOutput is used to display facility(ies)
@@ -203,6 +208,10 @@ type PractitionerIdentifier struct {
 	IdentifierValue string                     `json:"identifier_value"`
 	ValidFrom       string                     `json:"valid_from"`
 	ValidTo         string                     `json:"valid_to"`
+	// PractitionerID is only populated when this identifier is fetched or
+	// created through the practitioner identifier resource. It is empty when
+	// the identifier arrives nested inside a Practitioner response.
+	PractitionerID string `json:"practitioner_id,omitempty"`
 }
 
 type Practitioners struct {

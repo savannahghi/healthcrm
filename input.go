@@ -147,3 +147,25 @@ type FilterPractitionersInput struct {
 	IdentifierType  string
 	IdentifierValue string
 }
+
+// FacilityIdentifierInput is used to add an identifier to an existing facility.
+//
+// The source field is deliberately absent: it is derived server side from the
+// identifier type and is ignored if sent.
+type FacilityIdentifierInput struct {
+	FacilityID      string                 `json:"facility_id"`
+	IdentifierType  FacilityIdentifierType `json:"identifier_type"`
+	IdentifierValue string                 `json:"identifier_value"`
+	ValidFrom       *scalarutils.Date      `json:"valid_from,omitempty"`
+	ValidTo         *scalarutils.Date      `json:"valid_to,omitempty"`
+}
+
+// PractitionerIdentifierInput is used to add an identifier to an existing
+// practitioner.
+type PractitionerIdentifierInput struct {
+	PractitionerID  string                     `json:"practitioner_id"`
+	IdentifierType  PractitionerIdentifierType `json:"identifier_type"`
+	IdentifierValue string                     `json:"identifier_value"`
+	ValidFrom       *scalarutils.Date          `json:"valid_from,omitempty"`
+	ValidTo         *scalarutils.Date          `json:"valid_to,omitempty"`
+}

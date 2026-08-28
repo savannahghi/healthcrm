@@ -236,3 +236,46 @@ func (m MatchResult) IsValid() bool {
 func (m MatchResult) String() string {
 	return string(m)
 }
+
+// IsValid returns true if a facility identifier type is valid
+func (f FacilityIdentifierType) IsValid() bool {
+	switch f {
+	case
+		FacilityIdentifierTypeMFLCode,
+		FacilityIdentifierTypeHealthCRM,
+		FacilityIdentifierTypeSladeCode,
+		FacilityIdentifierTypeSHASladeCode,
+		FacilityIdentifierTypeFIDCode,
+		FacilityIdentifierTypeFRCode,
+		FacilityIdentifierTypeKMPDCRegNumber,
+		FacilityIdentifierTypeSladeAdvantageBranchID:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsValid returns true if a practitioner identifier type is valid
+func (p PractitionerIdentifierType) IsValid() bool {
+	switch p {
+	case
+		PractitionerIdentifierSladeCode,
+		PractitionerIdentifierShaSladeCode,
+		PractitionerIdentifierNationalId,
+		PractitionerIdentifierPassport,
+		PractitionerIdentifierKmpdcRegistrationNumber,
+		PractitionerIdentifierKmpdcLicenceNumber,
+		PractitionerIdentifierAlienId,
+		PractitionerIdentifierRefugeeId,
+		PractitionerIdentifierClientRegistryId,
+		PractitionerTypeSladeAdvantageBranchID:
+		return true
+	default:
+		return false
+	}
+}
+
+// String converts the practitioner identifier type enum to a string
+func (p PractitionerIdentifierType) String() string {
+	return string(p)
+}

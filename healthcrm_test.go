@@ -2568,3 +2568,362 @@ func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
 		})
 	}
 }
+
+func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
+	cfg := mockConfig()
+
+	type args struct {
+		ctx   context.Context
+		input *FacilityIdentifierInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		// noRequest marks cases the client side guards must reject before any
+		// HTTP call is made.
+		noRequest bool
+	}{
+		{
+			name: "Happy case: create facility identifier",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+					ValidFrom: &scalarutils.Date{
+						Year:  2026,
+						Month: 1,
+						Day:   1,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:      "Sad case: nil input",
+			noRequest: true,
+			args: args{
+				ctx:   context.Background(),
+				input: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: missing facility ID",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: invalid identifier type",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierType("NOT_A_REAL_TYPE"),
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: missing identifier value",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:     gofakeit.UUID(),
+					IdentifierType: FacilityIdentifierTypeSladeAdvantageBranchID,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to create facility identifier",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: malformed response body",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := fmt.Sprintf("%s/v1/facilities/identifiers/", cfg.BaseURL)
+
+			if tt.noRequest {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					t.Errorf("HealthCRMLib.CreateFacilityIdentifier() sent a request to %s, expected the input to be rejected first", path)
+					return httpmock.NewJsonResponse(http.StatusCreated, &IdentifiersOutput{})
+				})
+			}
+			if tt.name == "Happy case: create facility identifier" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &IdentifiersOutput{
+						ID: gofakeit.UUID(),
+						// The API renders the label, not the code that was sent.
+						IdentifierType:  "Slade Advantage Branch ID",
+						IdentifierValue: "45",
+						ValidFrom:       "2026-01-01",
+						FacilityID:      gofakeit.UUID(),
+						Source:          "ADVANTAGE",
+					}
+					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+				})
+			}
+			if tt.name == "Sad case: unable to create facility identifier" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadRequest, map[string]string{
+						"facility_id": "This field is required.",
+					})
+				})
+			}
+			if tt.name == "Sad case: malformed response body" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewStringResponse(http.StatusCreated, "not valid json"), nil
+				})
+			}
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			_, err = h.CreateFacilityIdentifier(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.CreateFacilityIdentifier() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestHealthCRMLib_CreatePractitionerIdentifier(t *testing.T) {
+	cfg := mockConfig()
+
+	type args struct {
+		ctx   context.Context
+		input *PractitionerIdentifierInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		// noRequest marks cases the client side guards must reject before any
+		// HTTP call is made.
+		noRequest bool
+	}{
+		{
+			name: "Happy case: create practitioner identifier",
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+					ValidFrom: &scalarutils.Date{
+						Year:  2026,
+						Month: 1,
+						Day:   1,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:      "Sad case: nil input",
+			noRequest: true,
+			args: args{
+				ctx:   context.Background(),
+				input: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: missing practitioner ID",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: invalid identifier type",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerIdentifierType("NOT_A_REAL_TYPE"),
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:      "Sad case: missing identifier value",
+			noRequest: true,
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID: gofakeit.UUID(),
+					IdentifierType: PractitionerTypeSladeAdvantageBranchID,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to create practitioner identifier",
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: malformed response body",
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := fmt.Sprintf("%s/v1/practitioners/identifiers/", cfg.BaseURL)
+
+			if tt.noRequest {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					t.Errorf("HealthCRMLib.CreatePractitionerIdentifier() sent a request to %s, expected the input to be rejected first", path)
+					return httpmock.NewJsonResponse(http.StatusCreated, &PractitionerIdentifier{})
+				})
+			}
+			if tt.name == "Happy case: create practitioner identifier" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &PractitionerIdentifier{
+						ID: gofakeit.UUID(),
+						// The API echoes the code here, unlike the facility endpoint.
+						IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+						IdentifierValue: "45",
+						ValidFrom:       "2026-01-01",
+						PractitionerID:  gofakeit.UUID(),
+					}
+					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+				})
+			}
+			if tt.name == "Sad case: unable to create practitioner identifier" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadRequest, map[string]string{
+						"practitioner_id": "This field is required.",
+					})
+				})
+			}
+			if tt.name == "Sad case: malformed response body" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewStringResponse(http.StatusCreated, "not valid json"), nil
+				})
+			}
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			_, err = h.CreatePractitionerIdentifier(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.CreatePractitionerIdentifier() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
