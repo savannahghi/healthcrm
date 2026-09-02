@@ -804,6 +804,13 @@ func (h *HealthCRMLib) VerifyIdentifierDocument(ctx context.Context, input IDVer
 // CreateFacilityIdentifier adds an identifier to an existing facility.
 //
 // A facility holds at most one identifier per type.
+//
+// The write is idempotent upstream, so it is safe to retry: a new identifier
+// returns 201 and a repeat of the same type and value returns 200 with the
+// existing record. Both are treated as success here.
+//
+// Reusing a type with a different value is a conflict(409).
+// Replacing the value on an existing identifier is not supported by this method.
 func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *FacilityIdentifierInput) (*IdentifiersOutput, error) {
 	if input == nil {
 		return nil, errors.New("facility identifier input must be provided")
@@ -835,7 +842,7 @@ func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *Faci
 		return nil, fmt.Errorf("could not read response: %w", err)
 	}
 
-	if response.StatusCode != http.StatusCreated {
+	if response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusOK {
 		return nil, errors.New(string(respBytes))
 	}
 
@@ -852,7 +859,11 @@ func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *Faci
 // CreatePractitionerIdentifier adds an identifier to an existing practitioner.
 //
 // A practitioner may hold several identifiers of the same type as long as the
-// values differ; only an exact type and value repeat is rejected.
+// values differ.
+//
+// The write is idempotent upstream, so it is safe to retry: a new identifier
+// returns 201 and a repeat returns 200 with the existing record.
+// Both are treated as success here.
 func (h *HealthCRMLib) CreatePractitionerIdentifier(ctx context.Context, input *PractitionerIdentifierInput) (*PractitionerIdentifier, error) {
 	if input == nil {
 		return nil, errors.New("practitioner identifier input must be provided")
@@ -884,7 +895,7 @@ func (h *HealthCRMLib) CreatePractitionerIdentifier(ctx context.Context, input *
 		return nil, fmt.Errorf("could not read response: %w", err)
 	}
 
-	if response.StatusCode != http.StatusCreated {
+	if response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusOK {
 		return nil, errors.New(string(respBytes))
 	}
 

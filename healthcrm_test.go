@@ -2602,6 +2602,30 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Happy case: duplicate facility identifier is absorbed idempotently",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: same type with a different value conflicts",
+			args: args{
+				ctx: context.Background(),
+				input: &FacilityIdentifierInput{
+					FacilityID:      gofakeit.UUID(),
+					IdentifierType:  FacilityIdentifierTypeSladeAdvantageBranchID,
+					IdentifierValue: "46",
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name:      "Sad case: nil input",
 			noRequest: true,
 			args: args{
@@ -2708,6 +2732,28 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 					return httpmock.NewJsonResponse(http.StatusCreated, resp)
 				})
 			}
+			if tt.name == "Happy case: duplicate facility identifier is absorbed idempotently" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &IdentifiersOutput{
+						ID:              gofakeit.UUID(),
+						IdentifierType:  "Slade Advantage Branch ID",
+						IdentifierValue: "45",
+						FacilityID:      gofakeit.UUID(),
+						Source:          "ADVANTAGE",
+					}
+					// Upstream returns 200, not 201, when the identifier already exists.
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+			if tt.name == "Sad case: same type with a different value conflicts" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					// Only one identifier per type is allowed, so a new value for a
+					// type the facility already carries is a conflict, not a repeat.
+					return httpmock.NewJsonResponse(http.StatusConflict, map[string]string{
+						"detail": "facility already has an identifier of this type",
+					})
+				})
+			}
 			if tt.name == "Sad case: unable to create facility identifier" {
 				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
 					return httpmock.NewJsonResponse(http.StatusBadRequest, map[string]string{
@@ -2777,6 +2823,18 @@ func TestHealthCRMLib_CreatePractitionerIdentifier(t *testing.T) {
 						Month: 1,
 						Day:   1,
 					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Happy case: duplicate practitioner identifier is absorbed idempotently",
+			args: args{
+				ctx: context.Background(),
+				input: &PractitionerIdentifierInput{
+					PractitionerID:  gofakeit.UUID(),
+					IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+					IdentifierValue: "45",
 				},
 			},
 			wantErr: false,
@@ -2885,6 +2943,18 @@ func TestHealthCRMLib_CreatePractitionerIdentifier(t *testing.T) {
 						PractitionerID:  gofakeit.UUID(),
 					}
 					return httpmock.NewJsonResponse(http.StatusCreated, resp)
+				})
+			}
+			if tt.name == "Happy case: duplicate practitioner identifier is absorbed idempotently" {
+				httpmock.RegisterResponder(http.MethodPost, path, func(r *http.Request) (*http.Response, error) {
+					resp := &PractitionerIdentifier{
+						ID:              gofakeit.UUID(),
+						IdentifierType:  PractitionerTypeSladeAdvantageBranchID,
+						IdentifierValue: "45",
+						PractitionerID:  gofakeit.UUID(),
+					}
+					// Upstream returns 200, not 201, when the identifier already exists.
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
 				})
 			}
 			if tt.name == "Sad case: unable to create practitioner identifier" {
