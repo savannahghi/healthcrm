@@ -2,8 +2,10 @@ package healthcrm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/brianvoe/gofakeit"
@@ -2569,6 +2571,32 @@ func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
 	}
 }
 
+// assertIdentifierConflict checks whether err is an identifier conflict, and
+// that a conflict unwraps to ErrIdentifierConflict and carries the upstream
+// detail in its body.
+func assertIdentifierConflict(t *testing.T, err error, wantConflict bool, wantDetail string) {
+	t.Helper()
+
+	if got := errors.Is(err, ErrIdentifierConflict); got != wantConflict {
+		t.Errorf("errors.Is(err, ErrIdentifierConflict) = %v, want %v (err = %v)", got, wantConflict, err)
+		return
+	}
+
+	if !wantConflict {
+		return
+	}
+
+	var conflict *ConflictError
+	if !errors.As(err, &conflict) {
+		t.Errorf("error = %v, want a *ConflictError", err)
+		return
+	}
+
+	if !strings.Contains(conflict.Body, wantDetail) {
+		t.Errorf("conflict body = %q, expected it to carry %q", conflict.Body, wantDetail)
+	}
+}
+
 func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 	cfg := mockConfig()
 
@@ -2583,6 +2611,9 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 		// noRequest marks cases the client side guards must reject before any
 		// HTTP call is made.
 		noRequest bool
+		// wantConflict marks the case that must come back as
+		// ErrIdentifierConflict rather than a bare error.
+		wantConflict bool
 	}{
 		{
 			name: "Happy case: create facility identifier",
@@ -2614,7 +2645,8 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Sad case: same type with a different value conflicts",
+			name:         "Sad case: same type with a different value conflicts",
+			wantConflict: true,
 			args: args{
 				ctx: context.Background(),
 				input: &FacilityIdentifierInput{
@@ -2791,6 +2823,8 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 				t.Errorf("HealthCRMLib.CreateFacilityIdentifier() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			assertIdentifierConflict(t, err, tt.wantConflict, "already has an identifier of this type")
 		})
 	}
 }

@@ -809,7 +809,8 @@ func (h *HealthCRMLib) VerifyIdentifierDocument(ctx context.Context, input IDVer
 // returns 201 and a repeat of the same type and value returns 200 with the
 // existing record. Both are treated as success here.
 //
-// Reusing a type with a different value is a conflict(409).
+// Reusing a type with a different value is a conflict(409), returned as a
+// *ConflictError that matches errors.Is against ErrIdentifierConflict.
 // Replacing the value on an existing identifier is not supported by this method.
 func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *FacilityIdentifierInput) (*IdentifiersOutput, error) {
 	if input == nil {
@@ -840,6 +841,10 @@ func (h *HealthCRMLib) CreateFacilityIdentifier(ctx context.Context, input *Faci
 	respBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode == http.StatusConflict {
+		return nil, &ConflictError{Body: string(respBytes)}
 	}
 
 	if response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusOK {
