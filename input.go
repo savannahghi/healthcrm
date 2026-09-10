@@ -2,6 +2,7 @@ package healthcrm
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/savannahghi/scalarutils"
 )
@@ -112,6 +113,35 @@ type ProfileInput struct {
 	ServiceCode   string                    `json:"service_code"`
 	Contacts      []*ProfileContactInput    `json:"contacts,omitempty"`
 	Identifiers   []*ProfileIdentifierInput `json:"identifiers,omitempty"`
+}
+
+// IsValid checks that every field ProfileInput marks as required carries a
+// value. It reports all of the missing fields in one error rather than
+// stopping at the first, so a caller fixing an input sees the whole list.
+func (p ProfileInput) IsValid() error {
+	var missing []string
+
+	required := []struct {
+		name  string
+		value string
+	}{
+		{name: "profile_id", value: p.ProfileID},
+		{name: "first_name", value: p.FirstName},
+		{name: "service_code", value: p.ServiceCode},
+		{name: "slade_code", value: p.SladeCode},
+	}
+
+	for _, field := range required {
+		if strings.TrimSpace(field.value) == "" {
+			missing = append(missing, field.name)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("profile input is missing required field(s): %s", strings.Join(missing, ", "))
+	}
+
+	return nil
 }
 
 // ProfileIdentifierInput is used to create profile(s) identifier(s)
