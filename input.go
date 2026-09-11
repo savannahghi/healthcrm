@@ -199,3 +199,19 @@ type PractitionerIdentifierInput struct {
 	ValidFrom       *scalarutils.Date          `json:"valid_from,omitempty"`
 	ValidTo         *scalarutils.Date          `json:"valid_to,omitempty"`
 }
+
+// SearchPersonsInput takes in the parameters used to search for persons by
+// free text and/or by identifier.
+//
+// IdentifierValue is required whenever IdentifierTypes or IdentifierSladeCode
+// is set. Filtering by IdentifierTypePayerMemberNo additionally requires
+// IdentifierSladeCode to be set.
+type SearchPersonsInput struct {
+	SearchParameter     string
+	IdentifierTypes     []IdentifierType
+	IdentifierValue     string
+	IdentifierSladeCode string
+	ExcludePersonID     string
+	MaskPII             bool
+	Pagination          *Pagination
+}

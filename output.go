@@ -306,3 +306,59 @@ type PractitionerPhoto struct {
 	ContentType  string `json:"content_type"`
 	Practitioner string `json:"practitioner_id"`
 }
+
+// PersonServiceOutput is used to display a service linked to a person's profile(s)
+type PersonServiceOutput struct {
+	ID                 string   `json:"id"`
+	Name               string   `json:"name"`
+	Label              string   `json:"label"`
+	Code               string   `json:"code"`
+	CallbackURL        string   `json:"callback_url"`
+	CallbackURLs       []string `json:"callback_urls"`
+	Description        string   `json:"description"`
+	NotificationEmails []string `json:"notification_emails"`
+	MatchingActive     bool     `json:"matching_active"`
+	MatchingPriority   int      `json:"matching_priority"`
+}
+
+// PersonContactOutput is used to display a person's contact as returned by
+// the persons search endpoint. It is a slimmed down version of
+// ProfileContactOutput.
+type PersonContactOutput struct {
+	ID           string `json:"id"`
+	ContactType  string `json:"contact_type"`
+	ContactValue string `json:"contact_value"`
+}
+
+// PersonOutput is used to display a person as returned by the persons search
+// endpoint.
+//
+// Email and PhoneNumber are always partially masked by HealthCRM for this
+// endpoint. Name is additionally masked when SearchPersonsInput.MaskPII is set.
+type PersonOutput struct {
+	ID                  string                `json:"id"`
+	Name                string                `json:"name"`
+	Age                 int                   `json:"age"`
+	DateOfBirth         string                `json:"date_of_birth"`
+	Gender              GenderType            `json:"gender"`
+	Email               string                `json:"email"`
+	PhoneNumber         string                `json:"phone_number"`
+	SILGlobalIdentifier string                `json:"sil_global_identifier"`
+	Services            []PersonServiceOutput `json:"services"`
+	Created             time.Time             `json:"created"`
+	Updated             time.Time             `json:"updated"`
+	Contacts            []PersonContactOutput `json:"contacts"`
+}
+
+// PersonSearchPage is the paginated response returned by the persons search endpoint
+type PersonSearchPage struct {
+	Count       int            `json:"count"`
+	Next        *string        `json:"next"`
+	Previous    *string        `json:"previous"`
+	PageSize    int            `json:"page_size"`
+	CurrentPage int            `json:"current_page"`
+	TotalPages  int            `json:"total_pages"`
+	StartIndex  int            `json:"start_index"`
+	EndIndex    int            `json:"end_index"`
+	Results     []PersonOutput `json:"results"`
+}
