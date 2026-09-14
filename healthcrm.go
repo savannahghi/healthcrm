@@ -801,6 +801,85 @@ func (h *HealthCRMLib) VerifyIdentifierDocument(ctx context.Context, input IDVer
 	return &result, nil
 }
 
+// SearchPersons searches for persons (patients/clients) by a free text
+// search term and/or by identifier.
+//
+// IdentifierValue must be provided whenever IdentifierTypes or
+// IdentifierSladeCode is set, and IdentifierSladeCode must be provided when
+// filtering by IdentifierTypePayerMemberNo; these are validated client side
+// since HealthCRM rejects the request with a 400 otherwise.
+func (h *HealthCRMLib) SearchPersons(ctx context.Context, input SearchPersonsInput) (*PersonSearchPage, error) {
+	path := "/v1/identities/persons/search/"
+
+	queryParams := url.Values{}
+
+	for _, identifierType := range input.IdentifierTypes {
+		if !identifierType.IsValid() {
+			return nil, fmt.Errorf("invalid identifier type provided: %s", identifierType)
+		}
+
+		if identifierType == IdentifierTypePayerMemberNo && input.IdentifierSladeCode == "" {
+			return nil, errors.New("identifier_slade_code is required when filtering by PAYER_MEMBER_NO")
+		}
+
+		queryParams.Add("identifier_type", identifierType.String())
+	}
+
+	if (len(input.IdentifierTypes) > 0 || input.IdentifierSladeCode != "") && input.IdentifierValue == "" {
+		return nil, errors.New("identifier_value is required when filtering by identifier_type or identifier_slade_code")
+	}
+
+	if input.IdentifierValue != "" {
+		queryParams.Add("identifier_value", input.IdentifierValue)
+	}
+
+	if input.IdentifierSladeCode != "" {
+		queryParams.Add("identifier_slade_code", input.IdentifierSladeCode)
+	}
+
+	if input.ExcludePersonID != "" {
+		queryParams.Add("exclude_person", input.ExcludePersonID)
+	}
+
+	if input.SearchParameter != "" {
+		queryParams.Add("search", input.SearchParameter)
+	}
+
+	if input.MaskPII {
+		queryParams.Add("mask_pii", "true")
+	}
+
+	if input.Pagination != nil {
+		queryParams.Add("page_size", input.Pagination.PageSize)
+		queryParams.Add("page", input.Pagination.Page)
+	}
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var person PersonSearchPage
+
+	err = json.Unmarshal(respBytes, &person)
+	if err != nil {
+		return nil, err
+	}
+
+	return &person, nil
+}
+
 // CreateFacilityIdentifier adds an identifier to an existing facility.
 //
 // A facility holds at most one identifier per type.

@@ -2571,6 +2571,189 @@ func TestHealthCRMLib_VerifyIdentifierDocument(t *testing.T) {
 	}
 }
 
+func TestHealthCRMLib_SearchPersons(t *testing.T) {
+	cfg := mockConfig()
+
+	invalid := IdentifierType("invalid")
+
+	type args struct {
+		ctx   context.Context
+		input SearchPersonsInput
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: search by free text",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					SearchParameter: "John Doe",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Happy case: search by identifier",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					IdentifierTypes: []IdentifierType{IdentifierTypeNationalID},
+					IdentifierValue: "12345678",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Happy case: search by identifier and payer slade code",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					IdentifierTypes:     []IdentifierType{IdentifierTypePayerMemberNo},
+					IdentifierValue:     "12345678",
+					IdentifierSladeCode: "1234",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: invalid identifier type",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					IdentifierTypes: []IdentifierType{invalid},
+					IdentifierValue: "12345678",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: identifier type without identifier value",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					IdentifierTypes: []IdentifierType{IdentifierTypeNationalID},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: payer member no without identifier slade code",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					IdentifierTypes: []IdentifierType{IdentifierTypePayerMemberNo},
+					IdentifierValue: "12345678",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					SearchParameter: "John Doe",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: invalid status code",
+			args: args{
+				ctx: context.Background(),
+				input: SearchPersonsInput{
+					SearchParameter: "John Doe",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := fmt.Sprintf("%s/v1/identities/persons/search/", cfg.BaseURL)
+
+			if tt.name == "Happy case: search by free text" || tt.name == "Happy case: search by identifier" || tt.name == "Happy case: search by identifier and payer slade code" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					resp := PersonSearchPage{
+						Count:       1,
+						PageSize:    20,
+						CurrentPage: 1,
+						TotalPages:  1,
+						StartIndex:  1,
+						EndIndex:    1,
+						Results: []PersonOutput{
+							{
+								ID:                  uuid.New().String(),
+								Name:                "John Doe",
+								Age:                 34,
+								DateOfBirth:         "1990-01-01",
+								Gender:              GenderTypeMale,
+								Email:               "j*****@example.com",
+								PhoneNumber:         "+254***223",
+								SILGlobalIdentifier: "0000010000000041",
+								Services: []PersonServiceOutput{
+									{
+										ID:   uuid.New().String(),
+										Name: "Slade advantage",
+										Code: "XX",
+									},
+								},
+								Contacts: []PersonContactOutput{
+									{
+										ID:           uuid.New().String(),
+										ContactType:  "PHONE_NUMBER",
+										ContactValue: "+254***223",
+									},
+								},
+							},
+						},
+					}
+					return httpmock.NewJsonResponse(http.StatusOK, resp)
+				})
+			}
+
+			if tt.name == "Sad case: invalid status code" {
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					return httpmock.NewJsonResponse(http.StatusBadGateway, nil)
+				})
+			}
+
+			if tt.name == "Sad case: unable to make request" {
+				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
+					resp := authutils.OAUTHResponse{
+						Scope:        "",
+						ExpiresIn:    3600,
+						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+						TokenType:    "Bearer",
+					}
+					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+
+			MockAuthenticate(cfg)
+
+			h, err := NewHealthCRMLib(cfg)
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+
+			_, err = h.SearchPersons(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.SearchPersons() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
 // assertIdentifierConflict checks whether err is an identifier conflict, and
 // that a conflict unwraps to ErrIdentifierConflict and carries the upstream
 // detail in its body.
