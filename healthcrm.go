@@ -992,3 +992,59 @@ func (h *HealthCRMLib) CreatePractitionerIdentifier(ctx context.Context, input *
 
 	return identifier, nil
 }
+
+// GetFacilityDetails fetches a facility by one of its identifiers.
+//
+// When health CRM holds no facility with the identifier, it looks the
+// identifier up in the Facility Registry and creates the facility from the
+// registry record. Only FR_CODE, FID_CODE and KMPDC_REG_NUMBER can be looked
+// up in the registry; any other type is answered from health CRM alone.
+//
+// A facility health CRM already holds returns 200 and one it has just created
+// returns 201. Both are treated as success here. A 404, from either health CRM
+// or the registry, comes back as a *NotFoundError that unwraps to
+// ErrFacilityNotFound.
+func (h *HealthCRMLib) GetFacilityDetails(ctx context.Context, identifierType FacilityIdentifierType, identifierValue string) (*FacilityOutput, error) {
+	if !identifierType.IsValid() {
+		return nil, fmt.Errorf("invalid facility identifier type provided: %s", identifierType)
+	}
+
+	if identifierValue == "" {
+		return nil, errors.New("identifier value must be provided")
+	}
+
+	path := "/v1/facilities/facilities/get_facility_details/"
+
+	queryParams := url.Values{}
+	queryParams.Add("identifier_type", identifierType.String())
+	queryParams.Add("identifier_value", identifierValue)
+
+	response, err := h.client.MakeRequest(ctx, http.MethodGet, path, queryParams, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	respBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read response: %w", err)
+	}
+
+	if response.StatusCode == http.StatusNotFound {
+		return nil, &NotFoundError{Body: string(respBytes)}
+	}
+
+	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated {
+		return nil, errors.New(string(respBytes))
+	}
+
+	var facilityOutput *FacilityOutput
+
+	err = json.Unmarshal(respBytes, &facilityOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	return facilityOutput, nil
+}

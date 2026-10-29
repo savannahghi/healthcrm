@@ -3214,3 +3214,197 @@ func TestHealthCRMLib_CreatePractitionerIdentifier(t *testing.T) {
 		})
 	}
 }
+
+// facilityLookupResponder answers a facility lookup with status after checking
+// the query carries the identifier pair the caller asked for.
+func facilityLookupResponder(t *testing.T, status int, identifierType FacilityIdentifierType, identifierValue string) httpmock.Responder {
+	t.Helper()
+
+	return func(r *http.Request) (*http.Response, error) {
+		query := r.URL.Query()
+		if got := query.Get("identifier_type"); got != identifierType.String() {
+			t.Errorf("identifier_type = %q, want %q", got, identifierType)
+		}
+		if got := query.Get("identifier_value"); got != identifierValue {
+			t.Errorf("identifier_value = %q, want %q", got, identifierValue)
+		}
+		return httpmock.NewJsonResponse(status, &FacilityOutput{
+			ID:   gofakeit.UUID(),
+			Name: gofakeit.BeerName(),
+		})
+	}
+}
+
+// assertFacilityNotFound checks that a lookup error unwraps to
+// ErrFacilityNotFound exactly when wantNotFound is set, and that a not-found
+// error carries the upstream detail in its body.
+func assertFacilityNotFound(t *testing.T, err error, wantNotFound bool, wantDetail string) {
+	t.Helper()
+
+	if got := errors.Is(err, ErrFacilityNotFound); got != wantNotFound {
+		t.Errorf("errors.Is(err, ErrFacilityNotFound) = %v, want %v (err = %v)", got, wantNotFound, err)
+		return
+	}
+
+	if !wantNotFound {
+		return
+	}
+
+	var notFound *NotFoundError
+	if !errors.As(err, &notFound) {
+		t.Errorf("error = %v, want a *NotFoundError", err)
+		return
+	}
+
+	if !strings.Contains(notFound.Body, wantDetail) {
+		t.Errorf("not found body = %q, expected it to carry %q", notFound.Body, wantDetail)
+	}
+}
+
+func TestHealthCRMLib_GetFacilityDetails(t *testing.T) {
+	cfg := mockConfig()
+	path := fmt.Sprintf("%s/v1/facilities/facilities/get_facility_details/", cfg.BaseURL)
+
+	type args struct {
+		ctx             context.Context
+		identifierType  FacilityIdentifierType
+		identifierValue string
+	}
+	tests := []struct {
+		name string
+		args args
+		// respond answers the lookup. Without it the input must be rejected
+		// before any request is made.
+		respond func(t *testing.T, a args) httpmock.Responder
+		// unreachable leaves the lookup with no responder at all, so the
+		// request itself fails.
+		unreachable bool
+		wantErr     bool
+		// wantNotFound marks the case that must come back as
+		// ErrFacilityNotFound rather than a bare error.
+		wantNotFound bool
+	}{
+		{
+			name: "Happy case: facility health CRM already holds",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeFRCode,
+				identifierValue: "FR-123",
+			},
+			respond: func(t *testing.T, a args) httpmock.Responder {
+				return facilityLookupResponder(t, http.StatusOK, a.identifierType, a.identifierValue)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Happy case: facility created from the Facility Registry",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeKMPDCRegNumber,
+				identifierValue: "COC/F/460",
+			},
+			respond: func(t *testing.T, a args) httpmock.Responder {
+				// Upstream returns 201, not 200, when it creates the facility.
+				return facilityLookupResponder(t, http.StatusCreated, a.identifierType, a.identifierValue)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: neither health CRM nor the registry holds the facility",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeFIDCode,
+				identifierValue: "109022",
+			},
+			respond: func(_ *testing.T, _ args) httpmock.Responder {
+				return httpmock.NewJsonResponderOrPanic(http.StatusNotFound, map[string]string{
+					"error": "No FR record for fid 109022",
+				})
+			},
+			wantErr:      true,
+			wantNotFound: true,
+		},
+		{
+			name: "Sad case: invalid identifier type",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierType("NOT_A_REAL_TYPE"),
+				identifierValue: "FR-123",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: missing identifier value",
+			args: args{
+				ctx:            context.Background(),
+				identifierType: FacilityIdentifierTypeFRCode,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unexpected status",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeFRCode,
+				identifierValue: "FR-123",
+			},
+			respond: func(_ *testing.T, _ args) httpmock.Responder {
+				return httpmock.NewJsonResponderOrPanic(http.StatusBadGateway, nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: malformed response body",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeFRCode,
+				identifierValue: "FR-123",
+			},
+			respond: func(_ *testing.T, _ args) httpmock.Responder {
+				return httpmock.NewStringResponder(http.StatusOK, "not valid json")
+			},
+			wantErr: true,
+		},
+		{
+			name: "Sad case: unable to make request",
+			args: args{
+				ctx:             context.Background(),
+				identifierType:  FacilityIdentifierTypeFRCode,
+				identifierValue: "FR-123",
+			},
+			unreachable: true,
+			wantErr:     true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			switch {
+			case tt.respond != nil:
+				httpmock.RegisterResponder(http.MethodGet, path, tt.respond(t, tt.args))
+			case !tt.unreachable:
+				httpmock.RegisterResponder(http.MethodGet, path, func(r *http.Request) (*http.Response, error) {
+					t.Errorf("HealthCRMLib.GetFacilityDetails() sent a request to %s, expected the input to be rejected first", path)
+					return httpmock.NewJsonResponse(http.StatusOK, &FacilityOutput{})
+				})
+			}
+
+			httpmock.Activate()
+			defer httpmock.DeactivateAndReset()
+			MockAuthenticate(cfg)
+			h, err := NewHealthCRMLib(cfg)
+			if err != nil {
+				t.Errorf("unable to initialize sdk: %v", err)
+			}
+			got, err := h.GetFacilityDetails(tt.args.ctx, tt.args.identifierType, tt.args.identifierValue)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HealthCRMLib.GetFacilityDetails() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && (got == nil || got.ID == "") {
+				t.Errorf("HealthCRMLib.GetFacilityDetails() = %v, expected the facility", got)
+			}
+
+			assertFacilityNotFound(t, err, tt.wantNotFound, "No FR record")
+		})
+	}
+}
