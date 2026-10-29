@@ -33,3 +33,25 @@ func (e *ConflictError) Error() string {
 func (e *ConflictError) Unwrap() error {
 	return ErrIdentifierConflict
 }
+
+// ErrFacilityNotFound is the sentinel for a facility lookup that neither
+// health CRM nor the Facility Registry behind it could answer. Match it with
+// errors.Is.
+var ErrFacilityNotFound = errors.New("facility not found")
+
+// NotFoundError carries the upstream response body for a facility lookup that
+// came back 404. It unwraps to ErrFacilityNotFound, so callers can branch with
+// errors.Is and still read the detail off the body.
+type NotFoundError struct {
+	// Body is the response body returned by health CRM, unmodified.
+	Body string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("facility not found: %s", e.Body)
+}
+
+// Unwrap allows errors.Is(err, ErrFacilityNotFound) to match.
+func (e *NotFoundError) Unwrap() error {
+	return ErrFacilityNotFound
+}
