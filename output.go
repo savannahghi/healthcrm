@@ -58,6 +58,7 @@ type FacilityOutput struct {
 	Name          string                `json:"name,omitempty"`
 	Description   string                `json:"description,omitempty"`
 	FacilityType  string                `json:"facility_type,omitempty"`
+	Level         string                `json:"level,omitempty"`
 	County        string                `json:"county,omitempty"`
 	Country       string                `json:"country,omitempty"`
 	Coordinates   CoordinatesOutput     `json:"coordinates,omitempty"`

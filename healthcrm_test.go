@@ -529,6 +529,7 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 						Name:         gofakeit.BeerName(),
 						Description:  gofakeit.HipsterSentence(50),
 						FacilityType: "HOSPITAL",
+						Level:        "LEVEL 3A",
 						County:       "Baringo",
 						Country:      "KE",
 						Address:      "",
@@ -580,10 +581,14 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 				t.Errorf("unable to initialize sdk: %v", err)
 			}
 
-			_, err = h.GetFacilityByID(tt.args.ctx, tt.args.id)
+			got, err := h.GetFacilityByID(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HealthCRMLib.GetFacilities() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+
+			if !tt.wantErr && got.Level != "LEVEL 3A" {
+				t.Errorf("HealthCRMLib.GetFacilityByID() level = %q, want %q", got.Level, "LEVEL 3A")
 			}
 		})
 	}
