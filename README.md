@@ -10,7 +10,7 @@ healthcrm is a library that abstracts the interaction with SIL's health CRM serv
 healthcrm is compatible with modern Go releases in module mode, with Go installed:
 
 ```bash
-go get -u github.com/savannahghi/healthcrm
+go get -u github.com/savannahghi/healthcrm/v2
 
 ```
 will resolve and add the package to the current development module, along with its dependencies.
@@ -18,7 +18,7 @@ will resolve and add the package to the current development module, along with i
 Alternatively the same can be achieved if you use import in a package:
 
 ```go
-import "github.com/savannahghi/healthcrm"
+import "github.com/savannahghi/healthcrm/v2"
 
 ```
 and run `go get` without parameters.
@@ -42,26 +42,33 @@ Continuous integration tests *must* pass on Github CI. Our coverage threshold
 is >=80% i.e you *must* keep coverage above 80%.
 
 
-## Environment variables
+## Authentication
 
-In order to run tests, you need to have an `env.sh` file similar to this one:
+The client authenticates to Keycloak with the OAuth 2.0 client-credentials
+grant. The calling service needs its own Keycloak client with client
+authentication and service accounts enabled, in a realm health CRM trusts, and
+an audience mapper that adds health CRM's client to the token's `aud` claim.
 
-```bash
-# Application settings
-export HEALTH_CRM_AUTH_SERVER_ENDPOINT=""
-export HEALTH_CRM_CLIENT_ID=""
-export HEALTH_CRM_CLIENT_SECRET=""
-export HEALTH_CRM_GRANT_TYPE=""
-export HEALTH_CRM_USERNAME=""
-export HEALTH_CRM_PASSWORD=""
+```go
+lib, err := healthcrm.NewHealthCRMLib(healthcrm.Config{
+	KeycloakURL:  "https://auth.example.com",
+	Realm:        "slade360",
+	ClientID:     "<calling service's Keycloak client ID>",
+	ClientSecret: "<calling service's Keycloak client secret>",
+	BaseURL:      "https://healthcrm.example.com",
+})
 ```
 
-This file *must not* be committed to version control.
+The client fetches an access token when it is created, so wrong credentials or
+a wrong realm fail `NewHealthCRMLib` immediately. After that it reuses the
+token and fetches a new one shortly before it expires.
 
-It is important to _export_ the environment variables. If they are not exported,
-they will not be visible to child processes e.g `go test ./...`.
+Version 2 removed the authserver password login. `AuthServerEndpoint`,
+`GrantType`, `Username` and `Password` are gone from `Config`; services still
+on authserver stay on v1 until they move to Keycloak.
 
-These environment variables should also be set up on github CI environment variable section.
+The tests mock Keycloak and health CRM, so `go test ./...` needs no environment
+variables.
 
 ## Contributing ##
 I would like to cover the entire GitHub API and contributions are of course always welcome. The

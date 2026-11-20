@@ -5,28 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
-	"github.com/savannahghi/authutils"
 )
-
-// MockAuthUtilsLib is a mock implementation of the authUtilsLib interface
-type MockAuthUtilsLib struct{}
-
-// Authenticate mocks implementation of authutil's library
-func (m *MockAuthUtilsLib) Authenticate() (*authutils.OAUTHResponse, error) {
-	return &authutils.OAUTHResponse{
-		AccessToken: "mockAccessToken",
-	}, nil
-}
-
-// Authenticate mocks implementation of authutil's library
-func (m *MockAuthUtilsLib) RefreshToken(ctx context.Context, refreshToken string) (*authutils.OAUTHResponse, error) {
-	return &authutils.OAUTHResponse{
-		AccessToken: "mockAccessToken",
-	}, nil
-}
 
 func TestMakeRequest(t *testing.T) {
 	ctx := context.Background()
@@ -126,7 +109,6 @@ func TestMakeRequest(t *testing.T) {
 			defer httpmock.DeactivateAndReset()
 
 			mockClient := &client{
-				authClient: &MockAuthUtilsLib{},
 				httpClient: &http.Client{},
 			}
 
@@ -142,5 +124,173 @@ func TestMakeRequest(t *testing.T) {
 				t.Errorf("Expected status code %d, got %d", tt.want, response.StatusCode)
 			}
 		})
+	}
+}
+
+func TestConfig_tokenURL(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  Config
+		want string
+	}{
+		{
+			name: "builds the realm token endpoint",
+			cfg:  Config{KeycloakURL: "https://auth.example.com", Realm: "slade360"},
+			want: "https://auth.example.com/realms/slade360/protocol/openid-connect/token",
+		},
+		{
+			name: "tolerates a trailing slash on the server URL",
+			cfg:  Config{KeycloakURL: "https://auth.example.com/", Realm: "slade360"},
+			want: "https://auth.example.com/realms/slade360/protocol/openid-connect/token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.tokenURL(); got != tt.want {
+				t.Errorf("tokenURL() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewClient_ValidatesConfig(t *testing.T) {
+	cfg := mockConfig()
+	cfg.Realm = ""
+	cfg.ClientSecret = " "
+
+	_, err := newClient(cfg)
+	if err == nil {
+		t.Fatal("expected an error for missing config, got nil")
+	}
+
+	for _, field := range []string{"Realm", "ClientSecret"} {
+		if !strings.Contains(err.Error(), field) {
+			t.Errorf("error %q does not name missing field %s", err, field)
+		}
+	}
+}
+
+func TestNewClient_SendsClientCredentials(t *testing.T) {
+	cfg := mockConfig()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), func(r *http.Request) (*http.Response, error) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("could not parse token request: %v", err)
+		}
+
+		want := map[string]string{
+			"grant_type":    "client_credentials",
+			"client_id":     cfg.ClientID,
+			"client_secret": cfg.ClientSecret,
+		}
+		for key, value := range want {
+			if got := r.PostForm.Get(key); got != value {
+				t.Errorf("token request %s = %q, want %q", key, got, value)
+			}
+		}
+
+		for _, key := range []string{"username", "password"} {
+			if r.PostForm.Has(key) {
+				t.Errorf("token request should not send %s", key)
+			}
+		}
+
+		resp := httpmock.NewStringResponse(http.StatusOK, mockTokenResponse)
+		resp.Header.Set("Content-Type", "application/json")
+		return resp, nil
+	})
+
+	if _, err := newClient(cfg); err != nil {
+		t.Fatalf("newClient() error = %v", err)
+	}
+}
+
+func TestNewClient_FailsWhenKeycloakRejectsCredentials(t *testing.T) {
+	cfg := mockConfig()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(
+		http.StatusUnauthorized,
+		`{"error":"unauthorized_client","error_description":"Invalid client or Invalid client credentials"}`,
+	))
+
+	_, err := newClient(cfg)
+	if err == nil {
+		t.Fatal("expected an authentication error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "failed to fetch Keycloak token") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestMakeRequest_SendsBearerToken(t *testing.T) {
+	cfg := mockConfig()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	MockAuthenticate(cfg)
+
+	var gotAuthorization string
+
+	httpmock.RegisterResponder(http.MethodGet, cfg.BaseURL+facilitiesPath, func(r *http.Request) (*http.Response, error) {
+		gotAuthorization = r.Header.Get("Authorization")
+		return httpmock.NewStringResponse(http.StatusOK, `{}`), nil
+	})
+
+	c, err := newClient(cfg)
+	if err != nil {
+		t.Fatalf("newClient() error = %v", err)
+	}
+
+	resp, err := c.MakeRequest(context.Background(), http.MethodGet, facilitiesPath, nil, nil)
+	if err != nil {
+		t.Fatalf("MakeRequest() error = %v", err)
+	}
+	defer resp.Body.Close()
+
+	if !strings.HasPrefix(gotAuthorization, "Bearer eyJ") {
+		t.Errorf("Authorization header = %q, want a Bearer access token", gotAuthorization)
+	}
+}
+
+func TestMakeRequest_FetchesNewTokenAfterExpiry(t *testing.T) {
+	cfg := mockConfig()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// A token that is already inside the renewal window forces a new fetch
+	// on every request, the way an expired 5-minute Keycloak token would.
+	httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), func(r *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(http.StatusOK,
+			`{"access_token":"short-lived","expires_in":1,"token_type":"Bearer"}`)
+		resp.Header.Set("Content-Type", "application/json")
+		return resp, nil
+	})
+	httpmock.RegisterResponder(http.MethodGet, cfg.BaseURL+facilitiesPath,
+		httpmock.NewStringResponder(http.StatusOK, `{}`))
+
+	c, err := newClient(cfg)
+	if err != nil {
+		t.Fatalf("newClient() error = %v", err)
+	}
+
+	resp, err := c.MakeRequest(context.Background(), http.MethodGet, facilitiesPath, nil, nil)
+	if err != nil {
+		t.Fatalf("MakeRequest() error = %v", err)
+	}
+	resp.Body.Close()
+
+	tokenCalls := httpmock.GetCallCountInfo()["POST "+cfg.tokenURL()]
+	if tokenCalls < 2 {
+		t.Errorf("token endpoint called %d times, want at least 2 (initial + renewal)", tokenCalls)
 	}
 }
