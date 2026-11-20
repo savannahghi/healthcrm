@@ -11,35 +11,37 @@ import (
 	"github.com/brianvoe/gofakeit"
 	"github.com/google/uuid"
 	"github.com/jarcoal/httpmock"
-	"github.com/savannahghi/authutils"
 	"github.com/savannahghi/enumutils"
 	"github.com/savannahghi/scalarutils"
 )
 
-// MockAuthenticate mocks a mock login request to obtain a token
+// mockTokenResponse is the body Keycloak returns for a client-credentials grant
+const mockTokenResponse = `{
+	"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+	"expires_in": 300,
+	"refresh_expires_in": 0,
+	"token_type": "Bearer",
+	"not-before-policy": 0,
+	"scope": "profile email"
+}`
+
+// MockAuthenticate mocks Keycloak's token endpoint for the client-credentials grant
 func MockAuthenticate(cfg Config) {
-	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-		resp := authutils.OAUTHResponse{
-			Scope:        "",
-			ExpiresIn:    3600,
-			AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-			RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-			TokenType:    "Bearer",
-		}
-		return httpmock.NewJsonResponse(http.StatusCreated, resp)
+	httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), func(r *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(http.StatusOK, mockTokenResponse)
+		resp.Header.Set("Content-Type", "application/json")
+		return resp, nil
 	})
 }
 
 // mockConfig returns configuration values for SDK tests
 func mockConfig() Config {
 	return Config{
-		AuthServerEndpoint: "http://mock-auth",
-		ClientID:           "test-client-id",
-		ClientSecret:       "test-secret",
-		GrantType:          "password",
-		Username:           "test-user",
-		Password:           "test-password",
-		BaseURL:            "http://mock-api",
+		KeycloakURL:  "http://mock-keycloak",
+		Realm:        "test-realm",
+		ClientID:     "test-client-id",
+		ClientSecret: "test-secret",
+		BaseURL:      "http://mock-api",
 	}
 }
 
@@ -165,16 +167,7 @@ func TestHealthCRMLib_CreateFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -454,16 +447,7 @@ func TestHealthCRMLib_GetFacilities(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -561,16 +545,7 @@ func TestHealthCRMLib_GetFacilityByID(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -680,16 +655,7 @@ func TestHealthCRMLib_UpdateFacility(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -790,16 +756,7 @@ func TestHealthCRMLib_GetServices(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1166,16 +1123,7 @@ func TestHealthCRMLib_GetFacilitiesOfferingAService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1286,16 +1234,7 @@ func TestHealthCRMLib_CreateService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1415,16 +1354,7 @@ func TestHealthCRMLib_LinkServiceToFacility(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1508,16 +1438,7 @@ func TestHealthCRMLib_GetService(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1645,16 +1566,7 @@ func TestHealthCRMLib_CreateProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Make Request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1785,16 +1697,7 @@ func TestHealthCRMLib_GetMultipleServices(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -1912,16 +1815,7 @@ func TestHealthCRMLib_GetMultipleFacilities(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -2159,16 +2053,7 @@ func TestHealthCRMLib_GetPersonIdentifiers(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -2309,16 +2194,7 @@ func TestHealthCRMLib_GetPersonContacts(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -2450,16 +2326,7 @@ func TestHealthCRMLib_MatchProfile(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad Case: Unable To Make Request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -2728,16 +2595,7 @@ func TestHealthCRMLib_SearchPersons(t *testing.T) {
 			}
 
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -2987,16 +2845,7 @@ func TestHealthCRMLib_CreateFacilityIdentifier(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
@@ -3192,16 +3041,7 @@ func TestHealthCRMLib_CreatePractitionerIdentifier(t *testing.T) {
 				})
 			}
 			if tt.name == "Sad case: unable to make request" {
-				httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/oauth2/token/", cfg.AuthServerEndpoint), func(r *http.Request) (*http.Response, error) {
-					resp := authutils.OAUTHResponse{
-						Scope:        "",
-						ExpiresIn:    3600,
-						AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-						TokenType:    "Bearer",
-					}
-					return httpmock.NewJsonResponse(http.StatusBadRequest, resp)
-				})
+				httpmock.RegisterResponder(http.MethodPost, cfg.tokenURL(), httpmock.NewStringResponder(http.StatusBadRequest, mockTokenResponse))
 			}
 
 			httpmock.Activate()
